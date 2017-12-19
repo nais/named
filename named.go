@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
-	"named/api"
+	"github.com/nais/named/api"
 	"github.com/golang/glog"
 )
 

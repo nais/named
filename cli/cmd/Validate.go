@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"named/api"
+	"github.com/nais/named/api"
 	"github.com/spf13/cobra"
 	"os"
 )

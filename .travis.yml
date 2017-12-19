@@ -13,7 +13,7 @@ script:
 - git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags https://$GH_TOKEN@github.com/nais/named
 - make docker-build push-dockerhub
 - cd charts
-- docker run -v $(pwd):/charts -v $(pwd)/../:/naisd -w /charts navikt/helm package /named/helm/named
+- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package /named/helm/named
 - docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts .
 - echo "<html><body><pre>$(cat index.yaml)</pre></body></html>" > index.html
 - git add --all
