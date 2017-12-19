@@ -2,14 +2,12 @@ package api
 
 import (
 	"fmt"
-
 	"github.com/forgerock/frconfig/crest"
-
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
-	"log"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/golang/glog"
 )
 
 const (
@@ -40,15 +38,15 @@ func init() {
 }
 
 func GetOpenAMUser() string {
-	return "amadmin"
+	return "user"
 }
 
 func GetOpenAMPassword() string {
-	return "221234567890"
+	return "pass"
 }
 
 func GetOpenAMUrl() string {
-	return "https://isso-drift.adeo.no/isso"
+	return "url"
 }
 
 func CreateObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err error) {
@@ -67,9 +65,9 @@ func CreateObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err er
 	return
 }
 
-func (openam *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
+func (am *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
 	client := &http.Client{}
-	request := openam.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
+	request := am.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
 	//dump, err := httputil.DumpRequestOut(request, true)
 
 	response, err := client.Do(request)
@@ -84,7 +82,7 @@ func (openam *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
 	err = json.Unmarshal(body, &result)
 
 	if err != nil {
-		log.Fatalf("Can not get result type", err)
+		glog.Errorf("Can not get result type: %s", err)
 	}
 
 	spew.Dump(result)

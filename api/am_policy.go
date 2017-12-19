@@ -102,8 +102,8 @@ func PolicytoYAML(policies []Policy) {
 }
 
 // Export all the policies as a XACML policy set
-func (openam *OpenAMConnection) ExportXacmlPolicies() (string, error) {
-	req := openam.newRequest("GET", "/xacml/policies",nil)
+func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
+	req := am.newRequest("GET", "/xacml/policies",nil)
 
 	client := &http.Client{}
 
@@ -121,17 +121,17 @@ func (openam *OpenAMConnection) ExportXacmlPolicies() (string, error) {
 }
 
 // Export all the policies as a JSON or YAML policy set string
-func (openam *OpenAMConnection) ExportPolicies(format,realm string) (out string, err error) {
-	url := fmt.Sprintf("/json%s/policies?_queryFilter=true", realm)
-	req := openam.newRequest("GET", url,nil)
+func (am *OpenAMConnection) ExportPolicies(format,realm string) (out string, err error) {
+	url := fmt.Sprintf("/json/policies?realm=%s&_queryFilter=true", realm)
+	req := am.newRequest("GET", url,nil)
 
 	result,err := crest.GetCRESTResult(req)
 	if err != nil {
-		fmt.Errorf("Could not get policies, err=%v",err)
+		glog.Errorf("Could not get policies, err=%v",err)
 		return "",err
 	}
 
-	fmt.Printf("Crest result = %+v", result)
+	glog.Infof("Crest result = %+v", result)
 
 	var m  = make(map[string]string)
 
@@ -147,7 +147,7 @@ func (openam *OpenAMConnection) ExportPolicies(format,realm string) (out string,
 
 type  PolicyArray  []interface{}
 
-func (openam *OpenAMConnection) ImportPoliciesFromFile(filePath string)  error {
+func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string)  error {
 	f,err := os.Open(filePath)
 	defer f.Close()
 	if err != nil {
@@ -190,7 +190,7 @@ func (am *OpenAMConnection) CreatePolicies(obj *crest.FRObject, overWrite, conti
 
 		realm,_  := (*obj).Metadata["realm"]
 
-		//fmt.Printf("Creating Policy %v realm = %s ", m, realm)
+		//glog.Infof("Creating Policy %v realm = %s ", m, realm)
 
 		e := am.CreatePolicy(m,overWrite, realm)
 		if e != nil {
@@ -212,7 +212,7 @@ func (am *OpenAMConnection) CreatePolicy(p map[string]interface{} , overWrite bo
 		policyName := p["name"].(string)
 		err = am.DeletePolicy(policyName,realm)
 		if err != nil {
-			fmt.Printf("Warning - can't delete policy! err=%v", err)
+			glog.Infof("Warning - can't delete policy! err=%v", err)
 		}
 	}
 	json,err := json.Marshal(p)
@@ -224,7 +224,7 @@ func (am *OpenAMConnection) CreatePolicy(p map[string]interface{} , overWrite bo
 
 	_,err = crest.GetCRESTResult(req)
 
-	//fmt.Printf("create policy result = %v err= %v", result, err)
+	//glog.Infof("create policy result = %v err= %v", result, err)
 	return
 
 }
@@ -236,7 +236,7 @@ func (am *OpenAMConnection)DeletePolicy(name, realm string) (err error) {
 
 	req := am.newRequest("DELETE", url, nil)
 
-	//fmt.Printf("Delete request %s\n", url)
+	//glog.Infof("Delete request %s\n", url)
 
 	client := &http.Client{}
 
@@ -248,7 +248,7 @@ func (am *OpenAMConnection)DeletePolicy(name, realm string) (err error) {
 
 	defer resp.Body.Close()
 
-	//fmt.Printf("code = %d stat = %v", resp.StatusCode, resp.Status)
+	//glog.Infof("code = %d stat = %v", resp.StatusCode, resp.Status)
 
 	if resp.StatusCode != 404 && resp.StatusCode != 200 {
 		err = fmt.Errorf("Error deleting resource %s, err=", name, resp.Status)

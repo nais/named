@@ -53,7 +53,7 @@ func (am *OpenAMConnection) Authenticate() error {
 
 	client := &http.Client{}
 
-	fmt.Printf("Authenticating to OpenAM ", url)
+	glog.Infof("Authenticating to AM %s", url)
 	response, err := client.Do(req)
 	if err != nil {
 		return err
@@ -81,11 +81,11 @@ func (am *OpenAMConnection) requestURL( path string) string  {
 	return strings.Join(strs, "")
 }
 
-func (openam *OpenAMConnection) newRequest(method, url string, body io.Reader) *http.Request {
-	request, err := http.NewRequest(method, openam.requestURL(url), body)
+func (am *OpenAMConnection) newRequest(method, url string, body io.Reader) *http.Request {
+	request, err := http.NewRequest(method, am.requestURL(url), body)
 	if err != nil {glog.Errorf("Could not create new request, error: %v", err)}
 
-	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: openam.tokenId}
+	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
 	request.AddCookie(&iPlanetCookie)
 	request.Header.Set("Content-Type", "application/json")
 	return request

@@ -1,0 +1,25 @@
+{
+  "result":[
+    { "name":"OAuth2ProviderPolicy",
+      "active":true,
+      "description":"",
+      "applicationName":"OAuth2",
+      "actionValues":
+      { "POST":true,
+        "GET":true
+      },
+      "resources":["https://server.domain.com/oauth2/authorize?*"],
+      "subject":
+      { "type":"AuthenticatedUsers"
+      },
+      "resourceTypeUuid":"bbf6879e-b0ee-4e5f-9878-3333942e1438",
+      "lastModifiedBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "lastModifiedDate":"2017-03-15T10:34:53.44Z",
+      "createdBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "creationDate":"2017-03-15T10:34:53.44Z"}
+  ],
+  "resultCount":1,
+  "pagedResultsCookie":null,
+  "totalPagedResultsPolicy":"NONE",
+  "totalPagedResults":-1,
+  "remainingPagedResults":0}

@@ -160,8 +160,8 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
-func (api *Api) runAmPolicyScript(namedConfigurationRequest NamedConfigurationRequest, sshSession *ssh.Session) error {
-	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", namedConfigurationRequest.Application, namedConfigurationRequest.Application)
+func (api *Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
+	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
 	var stdoutBuf bytes.Buffer
 
 	sshSession.Stdout = &stdoutBuf
@@ -171,8 +171,8 @@ func (api *Api) runAmPolicyScript(namedConfigurationRequest NamedConfigurationRe
 	if err != nil {
 		return fmt.Errorf("Could not run command %s %s %s", cmd, stdoutBuf, err)
 	}
-	glog.Infof("AM policy updated for %s in environment %s", namedConfigurationRequest.Application,
-		namedConfigurationRequest.Environment)
+	glog.Infof("AM policy updated for %s in environment %s", request.Application,
+		request.Environment)
 	return nil
 }
 
@@ -206,12 +206,12 @@ func unmarshalConfigurationRequest(body io.ReadCloser) (NamedConfigurationReques
 		return NamedConfigurationRequest{}, fmt.Errorf("Could not read configuration request body %s", err)
 	}
 
-	var configurationRequest NamedConfigurationRequest
-	if err = json.Unmarshal(requestBody, &configurationRequest); err != nil {
+	var request NamedConfigurationRequest
+	if err = json.Unmarshal(requestBody, &request); err != nil {
 		return NamedConfigurationRequest{}, fmt.Errorf("Could not unmarshal body %s", err)
 	}
 
-	return configurationRequest, nil
+	return request, nil
 }
 
 func createResourceRequest(alias, resourceType string) ResourceRequest {

@@ -1,0 +1,33 @@
+{
+  "result":[
+    { "uuid":"20a13582-1f32-4f83-905f-f71ff4e2e00d",
+      "name":"Delegation Service",
+      "description":"The built-in delegation Resource Type available to OpenAM Policies.",
+      "patterns":["sms://*:*/*","sms://*:*/*?*"],
+      "actions":{
+        "READ":true,
+        "MODIFY":true,
+        "DELEGATE":true
+      },
+      "createdBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "creationDate":1422892465848,
+      "lastModifiedBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "lastModifiedDate":1422892465848},
+    { "uuid":"bbf6879e-b0ee-4e5f-9878-3333942e1438",
+      "name":"OAuth2",
+      "description":"",
+      "patterns":["*://*:*/*/authorize?*"],
+      "actions":{
+        "POST":true,
+        "GET":true
+      },
+      "createdBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "creationDate":1489574092980,
+      "lastModifiedBy":"id=dsameuser,ou=user,dc=openam,dc=forgerock,dc=org",
+      "lastModifiedDate":1489574092980}
+    ],
+  "pagedResultsCookie":null,
+  "resultCount":2,
+  "totalPagedResultsPolicy":"NONE",
+  "totalPagedResults":-1,
+  "remainingPagedResults":0}
