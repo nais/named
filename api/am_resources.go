@@ -10,10 +10,12 @@ import (
 	"github.com/golang/glog"
 )
 
+// Policy name for creating new policies
 const (
 	POLICY = "am.policy"
 )
 
+// The AM resource type
 type ResourceType struct {
 	UUID				string 		`json:"uuid"`
 	Name 				string 		`json:"name"`
@@ -23,9 +25,10 @@ type ResourceType struct {
 	CreatedBy			string 		`json:"createdBy"`
 	CreationDate		int64 		`json:"creationDate"`
 	LastModifiedBy		string 		`json:"lastModifiedBy"`
-	LastModifiedDate 	int64 		`json:"lastModifiedBy"`
+	LastModifiedDate 	int64 		`json:"lastModifiedDate"`
 }
 
+// The AM result values when fetching resources
 type ResourceTypeResult struct {
 	Result             		[]ResourceType `json:"result"`
 	ResultCount        		int64          `json:"resultCount"`
@@ -67,8 +70,11 @@ func CreateObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err er
 
 func (am *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
 	client := &http.Client{}
-	request := am.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
+	request, err := am.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
 	//dump, err := httputil.DumpRequestOut(request, true)
+	if err != nil {
+		glog.Errorf("Failed to create request: %s", err)
+	}
 
 	response, err := client.Do(request)
 	defer response.Body.Close()

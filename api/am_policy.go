@@ -68,7 +68,7 @@ func ListPolicy(openam *OpenAMConnection) ([]Policy, error) {
 	err = json.Unmarshal(body, &result)
 
 	if err != nil {
-		glog.Errorf("cant get result type", err)
+		glog.Errorf("Could not get result type: %s", err)
 	}
 
 	//fmt.Printf("result = %s", result)
@@ -83,18 +83,16 @@ func PolicytoYAML(policies []Policy) {
 	for _, p := range policies {
 		s, err := json.Marshal(p)
 		if err != nil {
-			fmt.Println("error %v", err)
+			glog.Infof("Error %v", err)
 		} else {
-
-			fmt.Println("json:", string(s))
+			glog.Infof("json: %s", string(s))
 		}
 
 		y,err := yaml.Marshal(p)
 		if err != nil {
-			fmt.Println("error %v", err)
+			glog.Infof("error %v", err)
 		} else {
-
-			fmt.Println("yaml:\n", string(y))
+			glog.Infof("yaml: %s", string(y))
 		}
 
 	}
@@ -111,6 +109,7 @@ func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
 	defer resp.Body.Close()
 
 	if err != nil {
+		glog.Errorf("Could not get response: %s", err)
 		return "", err
 	}
 
@@ -251,7 +250,7 @@ func (am *OpenAMConnection)DeletePolicy(name, realm string) (err error) {
 	//glog.Infof("code = %d stat = %v", resp.StatusCode, resp.Status)
 
 	if resp.StatusCode != 404 && resp.StatusCode != 200 {
-		err = fmt.Errorf("Error deleting resource %s, err=", name, resp.Status)
+		err = fmt.Errorf("Error deleting resource %s, err=%s", name, resp.Status)
 	}
 	return
 }

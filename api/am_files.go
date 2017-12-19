@@ -24,7 +24,7 @@ type ValidationError struct {
 func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
 	policyFiles, err := downloadPolicies(request)
 	if err != nil {
-		glog.Errorf("Could not download policy files ", err)
+		glog.Errorf("Could not download policy files %s", err)
 		return []string{}, err
 	}
 
@@ -40,7 +40,7 @@ func downloadPolicies(request NamedConfigurationRequest) ([]string, error) {
 	urls := createPolicyFileUrls(request.Application, request.Version)
 	files, err := fetchPolicyFiles(urls, request.Application)
 	if err != nil {
-		glog.Errorf("Could not fetch policy files: ", err )
+		glog.Errorf("Could not fetch policy files: %s", err )
 	}
 
 	return files, nil
@@ -98,18 +98,18 @@ func fetchPolicyFiles(urls []string, application string) ([]string, error) {
 func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, application string) error {
 	sftpClient, err := SftpConnect(sshClient)
 	if err != nil {
-		return fmt.Errorf("Could not transfer files to AM server", err)
+		return fmt.Errorf("Could not transfer files to AM server: %s", err)
 	}
 
 	for _, policyFile := range policyFiles {
 		srcFile, err := os.Open(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not open file %s", policyFile, err)
+			return fmt.Errorf("Could not open file %s: %s", policyFile, err)
 		}
 
 		srcFileInfo, err := srcFile.Stat()
 		if err != nil {
-			return fmt.Errorf("Could not stat file %s", policyFile, err)
+			return fmt.Errorf("Could not stat file %s: %s", policyFile, err)
 		}
 
 		defer srcFile.Close()
@@ -117,7 +117,7 @@ func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, applicatio
 		_ = sftpClient.Mkdir("/tmp/" + application)
 		destFile, err := sftpClient.Create(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not create am file ", policyFile, err)
+			return fmt.Errorf("Could not create am file %s: %s", policyFile, err)
 		}
 		defer destFile.Close()
 

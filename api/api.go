@@ -130,7 +130,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 		files, err := GenerateAmFiles(namedConfigurationRequest)
 		if err != nil {
-			glog.Errorf("Could not download am policy files.", err)
+			glog.Errorf("Could not download am policy files: %s", err)
 		}
 
 		sshClient, sshSession, err := SshConnect(openamResource.Username, openamResource.Password, openamResource.Hostname, sshPort)
@@ -169,7 +169,7 @@ func (api *Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession 
 	glog.Infof("Running command %s", cmd)
 	err := sshSession.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("Could not run command %s %s %s", cmd, stdoutBuf, err)
+		return fmt.Errorf("Could not run command %s %s", cmd, err)
 	}
 	glog.Infof("AM policy updated for %s in environment %s", request.Application,
 		request.Environment)

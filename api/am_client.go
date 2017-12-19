@@ -43,10 +43,10 @@ func (am *OpenAMConnection) Authenticate() error {
 
 	var jsonStr = []byte(`{}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-
 	if err != nil {
-		fmt.Errorf("Something happened: ", err)
+		glog.Errorf("Could not create request: %s", err)
 	}
+
 	req.Header.Set("X-OpenAM-Username", am.User)
 	req.Header.Set("X-OpenAM-Password", am.Password)
 	req.Header.Set("Content-Type", "application/json")
@@ -66,7 +66,7 @@ func (am *OpenAMConnection) Authenticate() error {
 
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Failed to authenticate. %v", response.Status)
+		return fmt.Errorf("Failed to authenticate %v: %s", response.Status, err)
 	}
 
 	am.tokenId = a.TokenID
@@ -81,9 +81,11 @@ func (am *OpenAMConnection) requestURL( path string) string  {
 	return strings.Join(strs, "")
 }
 
-func (am *OpenAMConnection) newRequest(method, url string, body io.Reader) *http.Request {
+func (am *OpenAMConnection) newRequest(method, url string, body io.Reader) (*http.Request, error) {
 	request, err := http.NewRequest(method, am.requestURL(url), body)
-	if err != nil {glog.Errorf("Could not create new request, error: %v", err)}
+	if err != nil {
+		return request, fmt.Errorf("Could not create new request, error: %v", err)
+	}
 
 	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
 	request.AddCookie(&iPlanetCookie)

@@ -1,8 +1,7 @@
 # named 
 
 [![Build Status](https://travis-ci.org/nais/named.svg?branch=master)](https://travis-ci.org/nais/named)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nais/named)](https://goreportcard.com/report/github
-.com/nais/named)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nais/named)](https://goreportcard.com/report/github.com/nais/named)
 
 
 k8s in-cluster daemon with API for performing OpenAM-operations

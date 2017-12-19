@@ -193,7 +193,7 @@ func resolveSecret(secrets map[string]map[string]string, username string, passwo
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 
 	return map[string]string{"password": string(body)}, nil
 }
