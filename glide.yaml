@@ -1,0 +1,34 @@
+package: named
+import:
+- package: github.com/davecgh/go-spew
+  version: ^1.1.0
+  subpackages:
+  - spew
+- package: github.com/forgerock/frconfig
+  subpackages:
+  - crest
+- package: github.com/ghodss/yaml
+  version: ^1.0.0
+- package: github.com/go-yaml/yaml
+- package: github.com/goji/goji
+  version: ^2.0.0
+  subpackages:
+  - pat
+- package: github.com/golang/glog
+- package: github.com/h2non/filetype
+  version: ^1.0.4
+- package: github.com/prometheus/client_golang
+  version: ^0.9.0-pre1
+  subpackages:
+  - prometheus
+  - prometheus/promhttp
+- package: golang.org/x/crypto
+  subpackages:
+  - ssh
+testImport:
+- package: github.com/h2non/gock
+  version: ^1.0.6
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert

@@ -1,0 +1,8 @@
+vendor/
+.idea/
+named.iml
+/named
+/cli/name
+/name
+.glide/
+*.swp

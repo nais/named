@@ -1,0 +1,32 @@
+{
+  "type": "OpenAm",
+  "alias": "openam",
+  "scope": {
+    "environmentclass": "t",
+    "environment": "testname",
+    "zone": "zone"
+  },
+  "properties": {
+    "restUrl": "https://service.com/test",
+    "hostname": "hostname.domain.com",
+    "logoutUrl": "https://service.com/test/logout",
+    "username": "user"
+  },
+  "files": {},
+  "dodgy": false,
+  "id": 69,
+  "revision": 69,
+  "created": "2017-03-15T11:04:13.567",
+  "updated": "2017-03-15T11:04:13.567",
+  "lifecycle": {},
+  "accesscontrol": {
+    "environmentclass": "t",
+    "adgroups": [
+      "RA_OpenAMAdmin"
+    ]
+  },
+  "links": {
+    "self": "https://fasit.example.com/api/v2/resources/2000000",
+    "revisions": "https://fasit.example.com/api/v2/resources/2000000/revisions"
+  }
+}

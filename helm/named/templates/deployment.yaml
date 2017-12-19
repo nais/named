@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: named
+spec:
+  selector:
+    matchLabels:
+      app: named
+  template:
+    metadata:
+      labels:
+        app: named
+      annotations:
+        prometheus.io/scrape: "true"
+        nais.io/logformat: glog
+    spec:
+      containers:
+      - name: named
+        image: "{{ .Values.repository }}:{{ .Values.version }}"
+        resources:
+          requests:
+            memory: "{{ .Values.request.memory }}"
+            cpu: "{{ .Values.request.cpu }}"
+          limits:
+            memory: "{{ .Values.limit.memory }}"
+            cpu: "{{ .Values.limit.cpu }}"
+        livenessProbe:
+          httpGet:
+            path: /isalive
+            port: http
+        env:
+          - name: fasit_url
+            value: "{{ .Values.fasitUrl }}"
+          - name: cluster_name
+            value: "{{ .Values.clusterName }}"
+          - name: https_proxy
+            value: "{{ .Values.httpsProxy }}"
+          - name: http_proxy
+            value: "{{ .Values.httpProxy }}"
+          - name: no_proxy
+            value: "{{ .Values.noProxy }}"
+        ports:
+        - containerPort: 8081
+          protocol: TCP
+          name: http
