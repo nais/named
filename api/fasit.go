@@ -14,41 +14,47 @@ func init() {
 	prometheus.MustRegister(httpReqsCounter)
 }
 
-type Scope struct {
+type scope struct {
 	EnvironmentClass string `json:"environmentclass"`
 	Environment      string `json:"environment,omitempty"`
 	Zone             string `json:"zone,omitempty"`
 }
 
+// Password contains fasit reference to the password
 type Password struct {
 	Ref string `json:"ref"`
 }
 
+// Resource contains resource id as set in fasit
 type Resource struct {
 	Id int `json:"id"`
 }
 
+// FasitClient contains fasit connection details
 type FasitClient struct {
 	FasitUrl string
 	Username string
 	Password string
 }
 
+// FasitResource contains resource information from fasit
 type FasitResource struct {
 	Id           int
 	Alias        string
 	ResourceType string `json:"type"`
-	Scope        Scope  `json:"scope"`
+	Scope        scope  `json:"scope"`
 	Properties   map[string]string
 	Secrets      map[string]map[string]string
 	Certificates map[string]interface{} `json:"files"`
 }
 
+// ResourceRequest contains the alias and resource type for the fasit resource
 type ResourceRequest struct {
 	Alias        string
 	ResourceType string
 }
 
+// OpenAmResource contains information about the AM server as set in fasit
 type OpenAmResource struct {
 	Hostname string
 	Username string
@@ -147,6 +153,7 @@ func (fasit FasitClient) mapToOpenAmResource(fasitResource FasitResource) (resou
 	return resource, nil
 }
 
+// GetFasitEnvironment returns fasit environment string from fasit REST endpoint
 func (fasit FasitClient) GetFasitEnvironment(environmentName string) (string, error) {
 	requestCounter.With(nil).Inc()
 	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/environments/"+environmentName, nil)

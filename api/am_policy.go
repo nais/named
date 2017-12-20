@@ -15,7 +15,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// Policy in OpenAMConnection
+// Policy in AMConnection
 type Policy struct {
 	Name             string      `json:"name"`
 	Active           bool        `json:"active"`
@@ -41,7 +41,7 @@ type PolicyResultList struct {
 }
 
 // ListPolicy lists all OpenAM policies for a realm
-func ListPolicy(am *OpenAMConnection) ([]Policy, error) {
+func ListPolicy(am *AMConnection) ([]Policy, error) {
 
 	client := &http.Client{}
 	req, err := am.newRequest("GET", "/json/policies?_queryFilter=true", nil)
@@ -80,8 +80,7 @@ func ListPolicy(am *OpenAMConnection) ([]Policy, error) {
 	return result.Result, err
 }
 
-func PolicytoYAML(policies []Policy) {
-
+func policytoYAML(policies []Policy) {
 	for _, p := range policies {
 		s, err := json.Marshal(p)
 		if err != nil {
@@ -101,8 +100,8 @@ func PolicytoYAML(policies []Policy) {
 
 }
 
-// Export all the policies as a XACML policy set
-func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
+// ExportXacmlPolicies exports all the policies as a XACML policy set
+func (am *AMConnection) ExportXacmlPolicies() (string, error) {
 	req, err := am.newRequest("GET", "/xacml/policies", nil)
 	if err != nil {
 		glog.Errorf("Could not create request: %s", err)
@@ -127,8 +126,8 @@ func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
 
 }
 
-// Export all the policies as a JSON or YAML policy set string
-func (am *OpenAMConnection) ExportPolicies(format, realm string) (out string, err error) {
+// ExportPolicies exports all the policies as a JSON or YAML policy set string
+func (am *AMConnection) ExportPolicies(format, realm string) (out string, err error) {
 	url := fmt.Sprintf("/json/policies?realm=%s&_queryFilter=true", realm)
 	req, err := am.newRequest("GET", url, nil)
 
@@ -152,9 +151,9 @@ func (am *OpenAMConnection) ExportPolicies(format, realm string) (out string, er
 
 }
 
-type PolicyArray []interface{}
+type policyArrays []interface{}
 
-func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string) error {
+func (am *AMConnection) importPoliciesFromFile(filePath string) error {
 	f, err := os.Open(filePath)
 	defer f.Close()
 	if err != nil {
@@ -169,7 +168,7 @@ func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string) error {
 		return err
 	}
 
-	var p PolicyArray
+	var p policyArrays
 
 	err = json.Unmarshal(bytes, &p)
 
@@ -181,10 +180,10 @@ func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string) error {
 
 }
 
-// Create Policies in OpenAM instance. If continueOnError is true, keep trying
+// CreatePolicy creates policies in AM instance. If continueOnError is true, keep trying
 // to create policies even if a single create fails.  If overWrite is true,
 // First delete the policy and then create it
-func (am *OpenAMConnection) CreatePolicies(obj *crest.FRObject, overWrite, continueOnError bool) (err error) {
+func (am *AMConnection) CreatePolicies(obj *crest.FRObject, overWrite, continueOnError bool) (err error) {
 	// each item is a policy
 
 	for _, v := range *obj.Items {
@@ -210,10 +209,8 @@ func (am *OpenAMConnection) CreatePolicies(obj *crest.FRObject, overWrite, conti
 	return err
 }
 
-// Create a single policy described by the json
-func (am *OpenAMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, realm string) (err error) {
-	//crest.
-
+// CreatePolicy creates a single policy described by the json
+func (am *AMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, realm string) (err error) {
 	if overWrite { // try to delete existing policy if it exists
 		policyName := p["name"].(string)
 		err = am.DeletePolicy(policyName, realm)
@@ -237,8 +234,8 @@ func (am *OpenAMConnection) CreatePolicy(p map[string]interface{}, overWrite boo
 	return
 }
 
-// Delete the named policy. If the policy does exist, we do not return an error code
-func (am *OpenAMConnection) DeletePolicy(name, realm string) (err error) {
+// DeletePolicy erases the named policy. If the policy does exist, we do not return an error code
+func (am *AMConnection) DeletePolicy(name, realm string) (err error) {
 	url := fmt.Sprintf("/json%s/policies/%s", realm, name)
 
 	req, err := am.newRequest("DELETE", url, nil)

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const Port string = ":8081"
+const port string = ":8081"
 
 func main() {
 	fasitUrl := flag.String("fasitUrl", "https://fasit.example.no", "URL to fasit instance")
@@ -16,9 +16,9 @@ func main() {
 
 	api := api.NewApi(*fasitUrl, *clusterName)
 
-	glog.Infof("Named running on port %s using fasit instance %s", Port, *fasitUrl)
+	glog.Infof("Named running on port %s using fasit instance %s", port, *fasitUrl)
 
-	err := http.ListenAndServe(Port, api.MakeHandler())
+	err := http.ListenAndServe(port, api.MakeHandler())
 	if err != nil {
 		panic(err)
 	}

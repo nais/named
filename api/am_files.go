@@ -12,15 +12,18 @@ import (
 	"path/filepath"
 )
 
+// ValidationErrors contains all validation errors
 type ValidationErrors struct {
 	Errors []ValidationError
 }
 
+// ValidationError contains error and fields of destruction
 type ValidationError struct {
 	ErrorMessage string
 	Fields       map[string]string
 }
 
+// GenerateAmFiles returns array of validated and downloaded policy files
 func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
 	policyFiles, err := downloadPolicies(request)
 	if err != nil {
@@ -28,7 +31,7 @@ func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
 		return []string{}, err
 	}
 
-	validationErrors := ValidatePolicyFiles(policyFiles)
+	validationErrors := validatePolicyFiles(policyFiles)
 	if len(validationErrors.Errors) != 0 {
 		return []string{}, validationErrors
 	}
@@ -95,6 +98,7 @@ func fetchPolicyFiles(urls []string, application string) ([]string, error) {
 	return fileNames, nil
 }
 
+// CopyFilesToAmServer sftps policy files to desired AM host
 func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, application string) error {
 	sftpClient, err := SftpConnect(sshClient)
 	if err != nil {
@@ -144,7 +148,7 @@ func cleanupLocalFiles(policyFiles []string) error {
 	}
 	return nil
 }
-func ValidatePolicyFiles(fileNames []string) ValidationErrors {
+func validatePolicyFiles(fileNames []string) ValidationErrors {
 	var validationErrors ValidationErrors
 
 	for _, fileName := range fileNames {

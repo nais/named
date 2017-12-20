@@ -17,11 +17,13 @@ import (
 	"net/http"
 )
 
+// Api contains fasit instance and cluster to fetch AM information from
 type Api struct {
 	FasitUrl    string
 	ClusterName string
 }
 
+// NamedConfigurationRequest contains the information of the application to configure in AM
 type NamedConfigurationRequest struct {
 	Application string `json:"application"`
 	Version     string `json:"version"`
@@ -31,6 +33,7 @@ type NamedConfigurationRequest struct {
 	Password    string `json:"password"`
 }
 
+// AppError contains error and response code
 type AppError interface {
 	error
 	Code() int
@@ -44,6 +47,7 @@ type appError struct {
 
 const sshPort = "22"
 
+// NewApi initializes fasit instance information
 func NewApi(fasitUrl, clusterName string) *Api {
 	return &Api{
 		FasitUrl:    fasitUrl,
@@ -84,6 +88,7 @@ func init() {
 	prometheus.MustRegister(configurations)
 }
 
+// MakeHandler creates REST endpoint handlers
 func (api *Api) MakeHandler() http.Handler {
 	mux := goji.NewMux()
 	mux.Handle(pat.Get("/isalive"), appHandler(api.isAlive))

@@ -5,6 +5,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+//SshConnect returns ssh client and session for specified host
 func SshConnect(user, pass, host, port string) (*ssh.Client, *ssh.Session, error) {
 
 	sshConfig := &ssh.ClientConfig{
@@ -29,6 +30,7 @@ func SshConnect(user, pass, host, port string) (*ssh.Client, *ssh.Session, error
 	return client, session, nil
 }
 
+// SftpConnect returns sftp client for existing ssh client
 func SftpConnect(sshClient *ssh.Client) (*sftp.Client, error) {
 	sftpClient, err := sftp.NewClient(sshClient)
 	if err != nil {

@@ -11,11 +11,9 @@ import (
 )
 
 // Policy name for creating new policies
-const (
-	POLICY = "am.policy"
-)
+const POLICY = "am.policy"
 
-// The AM resource type
+// ResourceType contains the AM resource type
 type ResourceType struct {
 	UUID             string      `json:"uuid"`
 	Name             string      `json:"name"`
@@ -28,7 +26,7 @@ type ResourceType struct {
 	LastModifiedDate int64       `json:"lastModifiedDate"`
 }
 
-// The AM result values when fetching resources
+// ResourceTypeResult contains the AM result values when fetching resources
 type ResourceTypeResult struct {
 	Result                []ResourceType `json:"result"`
 	ResultCount           int64          `json:"resultCount"`
@@ -37,23 +35,26 @@ type ResourceTypeResult struct {
 }
 
 func init() {
-	crest.RegisterCreateObjectHandler([]string{POLICY}, CreateObjects)
+	crest.RegisterCreateObjectHandler([]string{POLICY}, createObjects)
 }
 
-func GetOpenAMUser() string {
+// GetAmUser returns username for AM connection
+func GetAmUser() string {
 	return "user"
 }
 
-func GetOpenAMPassword() string {
+// GetAmPassword returns password for AM connection
+func GetAmPassword() string {
 	return "pass"
 }
 
-func GetOpenAMUrl() string {
+// GetAmUrl returns base URL for AM connection
+func GetAmUrl() string {
 	return "url"
 }
 
-func CreateObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err error) {
-	am, err := GetOpenAMConnection()
+func createObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err error) {
+	am, err := GetAmConnection()
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,8 @@ func CreateObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err er
 	return
 }
 
-func (am *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
+// ListResourceTypes returns the available resource types from the AM server
+func (am *AMConnection) ListResourceTypes() ([]ResourceType, error) {
 	client := &http.Client{}
 	request, err := am.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
 	//dump, err := httputil.DumpRequestOut(request, true)

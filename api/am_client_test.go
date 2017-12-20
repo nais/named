@@ -8,7 +8,7 @@ import (
 )
 
 var baseUrl = "https://server.domain.com"
-var amc = OpenAMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
+var amc = AMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
 
 func TestRest(t *testing.T) {
 

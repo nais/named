@@ -1,5 +1,7 @@
 package version
 
-// build properties set during linking
+// Version contains application major version
 var Version string
+
+// Revision contains application minor version
 var Revision string

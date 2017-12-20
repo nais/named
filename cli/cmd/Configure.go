@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-const CONFIGURE_ENDPOINT = "/configure"
-const DEFAULT_CLUSTER = "preprod-fss"
+const configure_endpoint = "/configure"
+const default_cluster = "preprod-fss"
 
 var clustersDict = map[string]string{
 	"ci":           "nais-ci.devillo.no",
@@ -47,9 +47,8 @@ func getClusterUrl(cluster string) (string, error) {
 	if len(cluster) == 0 {
 		if len(urlEnv) > 0 {
 			return urlEnv, nil
-		} else {
-			cluster = DEFAULT_CLUSTER
 		}
+		cluster = default_cluster
 	}
 
 	url, err := validateCluster(cluster)
@@ -110,7 +109,7 @@ var configurationCmd = &cobra.Command{
 
 		start := time.Now()
 		fmt.Println(string(jsonStr))
-		resp, err := http.Post(clusterUrl+CONFIGURE_ENDPOINT, "application/json", bytes.NewBuffer(jsonStr))
+		resp, err := http.Post(clusterUrl+configure_endpoint, "application/json", bytes.NewBuffer(jsonStr))
 
 		if err != nil {
 			fmt.Printf("Error while POSTing to API: %v\n", err)
