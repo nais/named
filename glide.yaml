@@ -10,7 +10,7 @@ import:
 - package: github.com/ghodss/yaml
   version: ^1.0.0
 - package: github.com/go-yaml/yaml
-- package: github.com/goji/goji
+- package: goji.io
   version: ^2.0.0
   subpackages:
   - pat
