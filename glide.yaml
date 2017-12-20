@@ -13,7 +13,9 @@ import:
 - package: goji.io
   version: ^2.0.0
   subpackages:
+  - internal
   - pat
+  - pattern
 - package: github.com/golang/glog
 - package: github.com/h2non/filetype
   version: ^1.0.4

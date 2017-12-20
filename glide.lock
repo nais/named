@@ -1,5 +1,5 @@
-hash: 2a0092d12a9f447e113c811574f051e3b491962781952715c957a8afb7e46965
-updated: 2017-12-20T12:15:47.064917+01:00
+hash: 98ba8d4b5769fb62083e95d11438a85352a1addf6ad925eec43dff41dfbcaa55
+updated: 2017-12-20T13:14:23.491315+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -71,8 +71,8 @@ imports:
   version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
   subpackages:
   - internal
-  - pattern
   - pat
+  - pattern
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
