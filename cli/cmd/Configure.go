@@ -56,7 +56,7 @@ func getClusterUrl(cluster string) (string, error) {
 		return "", err
 	}
 
-	return "https://daemon." + url, nil
+	return "https://named." + url, nil
 }
 
 var configurationCmd = &cobra.Command{
