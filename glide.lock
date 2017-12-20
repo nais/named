@@ -1,5 +1,5 @@
-hash: 98ba8d4b5769fb62083e95d11438a85352a1addf6ad925eec43dff41dfbcaa55
-updated: 2017-12-20T13:14:23.491315+01:00
+hash: 111a3040acd013b27aa66b775fd7b10dafb87a3c8ecf53a6650947d5cfdb828d
+updated: 2017-12-20T13:20:25.182126+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -34,7 +34,7 @@ imports:
   subpackages:
   - pbutil
 - name: github.com/nais/named
-  version: 30b8de6ff21f3bc22739f69a70c2dfc39dd44878
+  version: e2317a8db27ebe51ecfededca4ec17da8df17048
   subpackages:
   - api
   - api/version
@@ -74,11 +74,9 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/crypto
-  version: 1f22c0103821b9390939b6776727195525381532
+  version: 9419663f5a44be8b34ca85f08abc5fe1be11f8a3
   subpackages:
-  - curve25519
   - ssh
-  - ssh/terminal
 - name: golang.org/x/sys
   version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
