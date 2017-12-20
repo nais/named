@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-// Policy name for creating new policies
+// POLICY sets the policy name on AM server
 const POLICY = "am.policy"
 
 // ResourceType contains the AM resource type

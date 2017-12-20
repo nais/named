@@ -180,6 +180,7 @@ func (api *Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession 
 	return nil
 }
 
+// Validate performs validation of NamedConfigurationRequest
 func (r NamedConfigurationRequest) Validate() []error {
 	required := map[string]*string{
 		"Application": &r.Application,

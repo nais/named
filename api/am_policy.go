@@ -180,7 +180,7 @@ func (am *AMConnection) importPoliciesFromFile(filePath string) error {
 
 }
 
-// CreatePolicy creates policies in AM instance. If continueOnError is true, keep trying
+// CreatePolicies creates policies in AM instance. If continueOnError is true, keep trying
 // to create policies even if a single create fails.  If overWrite is true,
 // First delete the policy and then create it
 func (am *AMConnection) CreatePolicies(obj *crest.FRObject, overWrite, continueOnError bool) (err error) {
