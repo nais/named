@@ -6,8 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"regexp"
+	"strconv"
 )
 
 func init() {
@@ -37,8 +37,8 @@ type FasitClient struct {
 type FasitResource struct {
 	Id           int
 	Alias        string
-	ResourceType string                 `json:"type"`
-	Scope        Scope                  `json:"scope"`
+	ResourceType string `json:"type"`
+	Scope        Scope  `json:"scope"`
 	Properties   map[string]string
 	Secrets      map[string]map[string]string
 	Certificates map[string]interface{} `json:"files"`
@@ -102,7 +102,7 @@ func (fasit FasitClient) getOpenAmResource(resourcesRequest ResourceRequest, fas
 	return resource, nil
 }
 
-func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string)(FasitResource, AppError) {
+func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, AppError) {
 	req, err := fasit.buildRequest("GET", "/api/v2/scopedresource", map[string]string{
 		"alias":       resourcesRequest.Alias,
 		"type":        resourcesRequest.ResourceType,

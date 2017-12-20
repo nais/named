@@ -1,27 +1,27 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/golang/glog"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"bytes"
-	"io"
 	"strings"
 )
 
 type OpenAMConnection struct {
-	BaseURL		string
-	User 		string
-	Password 	string
-	tokenId		string
-	Realm		string
+	BaseURL  string
+	User     string
+	Password string
+	tokenId  string
+	Realm    string
 }
 
 type AuthNResponse struct {
-	TokenID		string `json:"tokenId"`
-	SuccessURL	string `json:"successUrl"`
+	TokenID    string `json:"tokenId"`
+	SuccessURL string `json:"successUrl"`
 }
 
 func GetOpenAMConnection() (am *OpenAMConnection, err error) {
@@ -32,7 +32,7 @@ func GetOpenAMConnection() (am *OpenAMConnection, err error) {
 }
 
 func Open(url, user, password string) (am *OpenAMConnection, err error) {
-	am = &OpenAMConnection{BaseURL:url, User:user, Password:password}
+	am = &OpenAMConnection{BaseURL: url, User: user, Password: password}
 	err = am.Authenticate()
 
 	return
@@ -74,7 +74,7 @@ func (am *OpenAMConnection) Authenticate() error {
 	return nil
 }
 
-func (am *OpenAMConnection) requestURL( path string) string  {
+func (am *OpenAMConnection) requestURL(path string) string {
 	var strs []string
 	strs = append(strs, am.BaseURL)
 	strs = append(strs, path)
@@ -90,6 +90,5 @@ func (am *OpenAMConnection) newRequest(method, url string, body io.Reader) (*htt
 	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
 	request.AddCookie(&iPlanetCookie)
 	request.Header.Set("Content-Type", "application/json")
-	return request
+	return request, nil
 }
-

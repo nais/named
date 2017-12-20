@@ -1,17 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
-	"bytes"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ghodss/yaml"
 	"github.com/forgerock/frconfig/crest"
+	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 )
 
@@ -41,22 +41,24 @@ type PolicyResultList struct {
 }
 
 // ListPolicy lists all OpenAM policies for a realm
-func ListPolicy(openam *OpenAMConnection) ([]Policy, error) {
+func ListPolicy(am *OpenAMConnection) ([]Policy, error) {
 
 	client := &http.Client{}
-	req := openam.newRequest("GET", "/json/policies?_queryFilter=true",nil)
+	req, err := am.newRequest("GET", "/json/policies?_queryFilter=true", nil)
+	if err != nil {
+		glog.Errorf("Could not create request: %s", err)
+	}
 
-	dump, err := httputil.DumpRequestOut(req, true)
-
-	fmt.Printf("dump req is %s", dump)
+	dump, _ := httputil.DumpRequestOut(req, true)
+	glog.Infof("dump req is %s", dump)
 
 	//debug(httputil.DumpResponse(response, true))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
+
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -88,7 +90,7 @@ func PolicytoYAML(policies []Policy) {
 			glog.Infof("json: %s", string(s))
 		}
 
-		y,err := yaml.Marshal(p)
+		y, err := yaml.Marshal(p)
 		if err != nil {
 			glog.Infof("error %v", err)
 		} else {
@@ -101,11 +103,17 @@ func PolicytoYAML(policies []Policy) {
 
 // Export all the policies as a XACML policy set
 func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
-	req := am.newRequest("GET", "/xacml/policies",nil)
+	req, err := am.newRequest("GET", "/xacml/policies", nil)
+	if err != nil {
+		glog.Errorf("Could not create request: %s", err)
+	}
 
 	client := &http.Client{}
-
 	resp, err := client.Do(req)
+	if err != nil {
+		glog.Errorf("Could not execute request: %s", err)
+	}
+
 	defer resp.Body.Close()
 
 	if err != nil {
@@ -115,24 +123,24 @@ func (am *OpenAMConnection) ExportXacmlPolicies() (string, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 
-	return string(body),err
+	return string(body), err
 
 }
 
 // Export all the policies as a JSON or YAML policy set string
-func (am *OpenAMConnection) ExportPolicies(format,realm string) (out string, err error) {
+func (am *OpenAMConnection) ExportPolicies(format, realm string) (out string, err error) {
 	url := fmt.Sprintf("/json/policies?realm=%s&_queryFilter=true", realm)
-	req := am.newRequest("GET", url,nil)
+	req, err := am.newRequest("GET", url, nil)
 
-	result,err := crest.GetCRESTResult(req)
+	result, err := crest.GetCRESTResult(req)
 	if err != nil {
-		glog.Errorf("Could not get policies, err=%v",err)
-		return "",err
+		glog.Errorf("Could not get policies, err=%v", err)
+		return "", err
 	}
 
 	glog.Infof("Crest result = %+v", result)
 
-	var m  = make(map[string]string)
+	var m = make(map[string]string)
 
 	if realm != "" {
 		m["realm"] = realm
@@ -144,10 +152,10 @@ func (am *OpenAMConnection) ExportPolicies(format,realm string) (out string, err
 
 }
 
-type  PolicyArray  []interface{}
+type PolicyArray []interface{}
 
-func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string)  error {
-	f,err := os.Open(filePath)
+func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string) error {
+	f, err := os.Open(filePath)
 	defer f.Close()
 	if err != nil {
 		glog.Errorf("Can't open file %v, err=%v", filePath, err)
@@ -179,21 +187,20 @@ func (am *OpenAMConnection) ImportPoliciesFromFile(filePath string)  error {
 func (am *OpenAMConnection) CreatePolicies(obj *crest.FRObject, overWrite, continueOnError bool) (err error) {
 	// each item is a policy
 
-	for _,v := range *obj.Items {
+	for _, v := range *obj.Items {
 
 		// bytes,err :=  json.Marshal(v)
 
 		// cast to map so we can look at policy attrs
-		m :=  v.(map[string]interface{})
+		m := v.(map[string]interface{})
 
-
-		realm,_  := (*obj).Metadata["realm"]
+		realm, _ := (*obj).Metadata["realm"]
 
 		//glog.Infof("Creating Policy %v realm = %s ", m, realm)
 
-		e := am.CreatePolicy(m,overWrite, realm)
+		e := am.CreatePolicy(m, overWrite, realm)
 		if e != nil {
-			if  ! continueOnError {
+			if !continueOnError {
 				return e
 			}
 			err = e
@@ -204,45 +211,48 @@ func (am *OpenAMConnection) CreatePolicies(obj *crest.FRObject, overWrite, conti
 }
 
 // Create a single policy described by the json
-func (am *OpenAMConnection) CreatePolicy(p map[string]interface{} , overWrite bool, realm string) (err error) {
+func (am *OpenAMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, realm string) (err error) {
 	//crest.
 
-	if  overWrite { // try to delete existing policy if it exists
+	if overWrite { // try to delete existing policy if it exists
 		policyName := p["name"].(string)
-		err = am.DeletePolicy(policyName,realm)
+		err = am.DeletePolicy(policyName, realm)
 		if err != nil {
 			glog.Infof("Warning - can't delete policy! err=%v", err)
 		}
 	}
-	json,err := json.Marshal(p)
+	json, err := json.Marshal(p)
 	r := bytes.NewReader(json)
 	url := fmt.Sprintf("/json%s/policies?_action=create", realm)
-	req :=  am.newRequest("POST", url , r)
+	req, err := am.newRequest("POST", url, r)
+	if err != nil {
+		glog.Errorf("Could not create request: %s", err)
+	}
 
-	//req.
+	_, err = crest.GetCRESTResult(req)
+	if err != nil {
+		return err
+	}
 
-	_,err = crest.GetCRESTResult(req)
-
-	//glog.Infof("create policy result = %v err= %v", result, err)
 	return
-
 }
 
-
 // Delete the named policy. If the policy does exist, we do not return an error code
-func (am *OpenAMConnection)DeletePolicy(name, realm string) (err error) {
+func (am *OpenAMConnection) DeletePolicy(name, realm string) (err error) {
 	url := fmt.Sprintf("/json%s/policies/%s", realm, name)
 
-	req := am.newRequest("DELETE", url, nil)
+	req, err := am.newRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
 
 	//glog.Infof("Delete request %s\n", url)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
-
 	if err != nil {
-		return
+		return err
 	}
 
 	defer resp.Body.Close()
@@ -254,5 +264,6 @@ func (am *OpenAMConnection)DeletePolicy(name, realm string) (err error) {
 	}
 	return
 }
+
 // Script query - to get Uuid
 // http://openam.test.com:8080/openam/json/scripts?_pageSize=20&_sortKeys=name&_queryFilter=true&_pagedResultsOffset=0

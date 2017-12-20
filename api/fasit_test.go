@@ -1,10 +1,10 @@
 package api
 
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
 	"fmt"
 	"github.com/h2non/gock"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestGettingResource(t *testing.T) {
@@ -74,4 +74,3 @@ func TestGetFasitEnvironment(t *testing.T) {
 	})
 
 }
-

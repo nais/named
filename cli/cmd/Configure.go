@@ -72,13 +72,13 @@ var configurationCmd = &cobra.Command{
 
 		var cluster string
 		strings := map[string]*string{
-			"app":          &configurationRequest.Application,
-			"version":      &configurationRequest.Version,
-			"environment":  &configurationRequest.Environment,
-			"zone":         &configurationRequest.Zone,
-			"username":     &configurationRequest.Username,
-			"password":     &configurationRequest.Password,
-			"cluster":      &cluster,
+			"app":         &configurationRequest.Application,
+			"version":     &configurationRequest.Version,
+			"environment": &configurationRequest.Environment,
+			"zone":        &configurationRequest.Zone,
+			"username":    &configurationRequest.Username,
+			"password":    &configurationRequest.Password,
+			"cluster":     &cluster,
 		}
 
 		for key, pointer := range strings {

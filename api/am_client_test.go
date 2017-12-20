@@ -1,14 +1,14 @@
 package api
 
 import (
-	"testing"
+	"github.com/golang/glog"
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
-	"github.com/golang/glog"
+	"testing"
 )
 
 var baseUrl = "https://server.domain.com"
-var amc = OpenAMConnection{BaseURL:baseUrl, User:"user", Password:"pass"}
+var amc = OpenAMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
 
 func TestRest(t *testing.T) {
 
@@ -16,7 +16,7 @@ func TestRest(t *testing.T) {
 
 	gock.New(baseUrl).
 		Post("/json/authenticate").
-		MatchHeader("Content-Type",	"application/json").
+		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
 		Reply(200)
@@ -51,7 +51,7 @@ func TestJsonExport(t *testing.T) {
 
 	gock.New(baseUrl).
 		Post("/json/authenticate").
-		MatchHeader("Content-Type",	"application/json").
+		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
 		Reply(200)

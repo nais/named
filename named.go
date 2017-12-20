@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"net/http"
-	"github.com/nais/named/api"
 	"github.com/golang/glog"
+	"github.com/nais/named/api"
+	"net/http"
 )
 
 const Port string = ":8081"

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"golang.org/x/crypto/ssh"
 	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 func SshConnect(user, pass, host, port string) (*ssh.Client, *ssh.Session, error) {

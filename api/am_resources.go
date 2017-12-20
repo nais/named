@@ -1,13 +1,13 @@
 package api
 
 import (
-	"fmt"
-	"github.com/forgerock/frconfig/crest"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/forgerock/frconfig/crest"
 	"github.com/golang/glog"
+	"io/ioutil"
+	"net/http"
 )
 
 // Policy name for creating new policies
@@ -17,23 +17,23 @@ const (
 
 // The AM resource type
 type ResourceType struct {
-	UUID				string 		`json:"uuid"`
-	Name 				string 		`json:"name"`
-	Description 		string 		`json:"description"`
-	Patterns 			[]string 	`json:"patterns"`
-	Actions				interface{} `json:"actions"`
-	CreatedBy			string 		`json:"createdBy"`
-	CreationDate		int64 		`json:"creationDate"`
-	LastModifiedBy		string 		`json:"lastModifiedBy"`
-	LastModifiedDate 	int64 		`json:"lastModifiedDate"`
+	UUID             string      `json:"uuid"`
+	Name             string      `json:"name"`
+	Description      string      `json:"description"`
+	Patterns         []string    `json:"patterns"`
+	Actions          interface{} `json:"actions"`
+	CreatedBy        string      `json:"createdBy"`
+	CreationDate     int64       `json:"creationDate"`
+	LastModifiedBy   string      `json:"lastModifiedBy"`
+	LastModifiedDate int64       `json:"lastModifiedDate"`
 }
 
 // The AM result values when fetching resources
 type ResourceTypeResult struct {
-	Result             		[]ResourceType `json:"result"`
-	ResultCount        		int64          `json:"resultCount"`
-	PagedResultsCookie 		string         `json:"pagedResultsCookie"`
-	RemainingPagedResults   int64          `json:"remainingPagedResults"`
+	Result                []ResourceType `json:"result"`
+	ResultCount           int64          `json:"resultCount"`
+	PagedResultsCookie    string         `json:"pagedResultsCookie"`
+	RemainingPagedResults int64          `json:"remainingPagedResults"`
 }
 
 func init() {
@@ -77,6 +77,10 @@ func (am *OpenAMConnection) ListResourceTypes() ([]ResourceType, error) {
 	}
 
 	response, err := client.Do(request)
+	if err != nil {
+		glog.Errorf("Could not execute request: %s", err)
+	}
+
 	defer response.Body.Close()
 
 	if err != nil {

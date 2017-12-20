@@ -2,14 +2,14 @@ package api
 
 import (
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/h2non/filetype"
+	"golang.org/x/crypto/ssh"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"github.com/h2non/filetype"
-	"github.com/golang/glog"
-	"io"
-	"path/filepath"
 	"os"
-	"golang.org/x/crypto/ssh"
+	"path/filepath"
 )
 
 type ValidationErrors struct {
@@ -40,7 +40,7 @@ func downloadPolicies(request NamedConfigurationRequest) ([]string, error) {
 	urls := createPolicyFileUrls(request.Application, request.Version)
 	files, err := fetchPolicyFiles(urls, request.Application)
 	if err != nil {
-		glog.Errorf("Could not fetch policy files: %s", err )
+		glog.Errorf("Could not fetch policy files: %s", err)
 	}
 
 	return files, nil
@@ -61,11 +61,11 @@ func fetchPolicyFiles(urls []string, application string) ([]string, error) {
 
 		_, fileName := filepath.Split(url)
 
-		if _, err := os.Stat("/tmp/" + application);os.IsNotExist(err) {
-			os.Mkdir("/tmp/" + application, os.ModePerm)
+		if _, err := os.Stat("/tmp/" + application); os.IsNotExist(err) {
+			os.Mkdir("/tmp/"+application, os.ModePerm)
 		}
 
-		out, err := os.Create("/tmp/"+ application + "/" + fileName)
+		out, err := os.Create("/tmp/" + application + "/" + fileName)
 		if err != nil {
 			return []string{}, fmt.Errorf("Could not create file %s " + fileName)
 		}

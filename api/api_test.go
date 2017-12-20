@@ -1,13 +1,13 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"errors"
-	"encoding/json"
 )
 
 func TestAnIncorrectPayloadGivesError(t *testing.T) {
@@ -108,13 +108,11 @@ func TestValidateDeploymentRequest(t *testing.T) {
 
 func CreateConfigurationRequest(appName, version, env, zone, username, password string) NamedConfigurationRequest {
 	return NamedConfigurationRequest{
-		Application:  appName,
-		Version:      version,
-		Environment:  env,
-		Zone:         zone,
-		Username:     username,
-		Password:     password,
+		Application: appName,
+		Version:     version,
+		Environment: env,
+		Zone:        zone,
+		Username:    username,
+		Password:    password,
 	}
 }
-
-

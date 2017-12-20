@@ -1,16 +1,16 @@
 package api
 
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"os"
 	"github.com/h2non/gock"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 func TestGetAmFiles(t *testing.T) {
-	const policypath= "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	const policypath = "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
 		".0/am/app-policies.xml"
-	const notenforcedpath= "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	const notenforcedpath = "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
 		".0/am/not-enforced-urls.txt"
 	defer gock.Off()
 
@@ -32,7 +32,6 @@ func TestValidFileGivesNoError(t *testing.T) {
 	assert.Nil(t, validateContent(txtFileName))
 }
 
-
 func TestInvalidFileGivesError(t *testing.T) {
 	fileName := "testdata/app-policies-error.xml"
 
@@ -51,15 +50,14 @@ func TestFetchNonExistingFilesShouldReturnError(t *testing.T) {
 	version := "2.0"
 	urls := createPolicyFileUrls(app, version)
 
-	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
 		".0/am/app-policies.xml", urls[0])
-	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
 		".0/am/not-enforced-urls.txt", urls[1])
 
 	_, err := fetchPolicyFiles(urls, app)
-	assert.Equal(t,"Got HTTP status code 404 fetching manifest from URL: http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2.0/am/app-policies.xml",err.Error())
+	assert.Equal(t, "Got HTTP status code 404 fetching manifest from URL: http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2.0/am/app-policies.xml", err.Error())
 
 	_, fileErr := os.Stat("/tmp/" + app)
 	assert.Nil(t, fileErr)
 }
-

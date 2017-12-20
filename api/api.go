@@ -1,34 +1,34 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/goji/goji"
+	"github.com/goji/goji/pat"
 	"github.com/golang/glog"
 	ver "github.com/nais/named/api/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/goji/goji"
-	"github.com/goji/goji/pat"
-	"net/http"
-	"bytes"
+	"golang.org/x/crypto/ssh"
 	"io"
 	"io/ioutil"
-	"golang.org/x/crypto/ssh"
-	"errors"
+	"net/http"
 )
 
 type Api struct {
-	FasitUrl	string
+	FasitUrl    string
 	ClusterName string
 }
 
 type NamedConfigurationRequest struct {
-	Application  string `json:"application"`
-	Version		 string `json:"version"`
-	Environment	 string `json:"environment"`
-	Zone         string `json:"zone"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
+	Application string `json:"application"`
+	Version     string `json:"version"`
+	Environment string `json:"environment"`
+	Zone        string `json:"zone"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
 }
 
 type AppError interface {
@@ -46,7 +46,7 @@ const sshPort = "22"
 
 func NewApi(fasitUrl, clusterName string) *Api {
 	return &Api{
-		FasitUrl: fasitUrl,
+		FasitUrl:    fasitUrl,
 		ClusterName: clusterName,
 	}
 }
@@ -77,7 +77,6 @@ var (
 	configurations = prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "configurations", Help: "configurations done by nameD"}, []string{"nameD"},
 	)
-
 )
 
 func init() {
@@ -154,8 +153,8 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	} else if namedConfigurationRequest.Zone == "fss" {
 
 	} else {
-		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " +namedConfigurationRequest.Zone,
-		http.StatusBadRequest}
+		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
+			http.StatusBadRequest}
 	}
 	return nil
 }
@@ -216,7 +215,7 @@ func unmarshalConfigurationRequest(body io.ReadCloser) (NamedConfigurationReques
 
 func createResourceRequest(alias, resourceType string) ResourceRequest {
 	return ResourceRequest{
-		Alias:alias,
-		ResourceType:resourceType,
+		Alias:        alias,
+		ResourceType: resourceType,
 	}
 }
