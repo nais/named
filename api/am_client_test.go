@@ -41,7 +41,7 @@ func TestRest(t *testing.T) {
 	for _, v := range rt {
 		glog.Infof("%v", v)
 	}
-
+	assert.NotEmpty(t, rt)
 	assert.True(t, true, gock.IsDone())
 }
 
@@ -71,5 +71,6 @@ func TestJsonExport(t *testing.T) {
 		glog.Errorf("Could not list resource types %s", err)
 	}
 	glog.Infof(json)
+	assert.NotEmpty(t, json)
 	assert.True(t, true, gock.IsDone())
 }

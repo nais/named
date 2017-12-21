@@ -1,9 +1,5 @@
 package: named
 import:
-- package: github.com/davecgh/go-spew
-  version: ^1.1.0
-  subpackages:
-  - spew
 - package: github.com/forgerock/frconfig
   subpackages:
   - crest

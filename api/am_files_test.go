@@ -56,7 +56,7 @@ func TestFetchNonExistingFilesShouldReturnError(t *testing.T) {
 		".0/am/not-enforced-urls.txt", urls[1])
 
 	_, err := fetchPolicyFiles(urls, app)
-	assert.Equal(t, "Got HTTP status code 404 fetching manifest from URL: http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2.0/am/app-policies.xml", err.Error())
+	assert.NotNil(t, err)
 
 	_, fileErr := os.Stat("/tmp/" + app)
 	assert.Nil(t, fileErr)

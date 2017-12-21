@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/forgerock/frconfig/crest"
 	"github.com/golang/glog"
 	"io/ioutil"
@@ -96,8 +95,6 @@ func (am *AMConnection) ListResourceTypes() ([]ResourceType, error) {
 	if err != nil {
 		glog.Errorf("Can not get result type: %s", err)
 	}
-
-	spew.Dump(result)
 
 	return result.Result, err
 }

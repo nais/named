@@ -9,7 +9,6 @@ import (
 	"net/http/httputil"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/forgerock/frconfig/crest"
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
@@ -72,10 +71,6 @@ func ListPolicy(am *AMConnection) ([]Policy, error) {
 	if err != nil {
 		glog.Errorf("Could not get result type: %s", err)
 	}
-
-	//fmt.Printf("result = %s", result)
-
-	spew.Dump(result)
 
 	return result.Result, err
 }
