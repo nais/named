@@ -5,6 +5,10 @@ imports:
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
+- name: github.com/davecgh/go-spew
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  subpackages:
+  - spew
 - name: github.com/forgerock/frconfig
   version: 438e69e2a401210b8812af270c7f9c0b18af54be
   subpackages:
