@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // Api contains fasit instance and cluster to fetch AM information from
@@ -125,7 +126,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
 
-	if namedConfigurationRequest.Zone == "sbs" {
+	if "sbs" == strings.ToLower(namedConfigurationRequest.Zone) {
 		openamResource, error := fasitClient.getOpenAmResource(resourceRequest, namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
 			namedConfigurationRequest.Zone)
 		if error != nil {
@@ -155,7 +156,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			glog.Errorf("Failed to run script: %s", err)
 		}
 
-	} else if namedConfigurationRequest.Zone == "fss" {
+	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
 
 	} else {
 		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,

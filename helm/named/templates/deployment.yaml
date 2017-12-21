@@ -33,12 +33,6 @@ spec:
             value: "{{ .Values.fasitUrl }}"
           - name: cluster_name
             value: "{{ .Values.clusterName }}"
-          - name: https_proxy
-            value: "{{ .Values.httpsProxy }}"
-          - name: http_proxy
-            value: "{{ .Values.httpProxy }}"
-          - name: no_proxy
-            value: "{{ .Values.noProxy }}"
         ports:
         - containerPort: 8081
           protocol: TCP
