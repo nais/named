@@ -34,7 +34,7 @@ imports:
   subpackages:
   - pbutil
 - name: github.com/nais/named
-  version: 5480adc0b4bc4df015c8782e025811b52ce4e73d
+  version: 7d168d161ac2595ee50c85acf042c77055da8140
   subpackages:
   - api
   - api/version
