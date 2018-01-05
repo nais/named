@@ -69,11 +69,11 @@ func TestValidConfigurationRequestInSBS(t *testing.T) {
 		Reply(200).File("testdata/fasitAmResponse.json")
 
 	gock.New("https://repo.adeo.no").
-		Get("/repositories/raw/nais/appname/123/am/not-enforced-urls.txt").
+		Get("/repository/raw/nais/appname/123/am/not-enforced-urls.txt").
 		Reply(200).File("testdata/not-enforced-urls.txt")
 
 	gock.New("https://repo.adeo.no").
-		Get("/repositories/raw/nais/appname/123/am/app-policies.xml").
+		Get("/repository/raw/nais/appname/123/am/app-policies.xml").
 		Reply(200).File("testdata/app-policies.xml")
 
 	assert.True(t, gock.IsPending())
