@@ -33,7 +33,7 @@ type Policy struct {
 
 // A PolicyResultList is a set of Policies
 type PolicyResultList struct {
-	Result                []Policy `json:"result"` 
+	Result                []Policy `json:"result"`
 	ResultCount           int64    `json:"resultCount"`
 	PagedResultsCookie    string   `json:"pagedResultsCookie"`
 	RemainingPagedResults int64    `json:"remainingPagedResults"`

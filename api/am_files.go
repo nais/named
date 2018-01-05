@@ -31,7 +31,7 @@ func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
 		return []string{}, err
 	}
 
-	validationErrors := validatePolicyFiles(policyFiles)
+	validationErrors := ValidatePolicyFiles(policyFiles)
 	if len(validationErrors.Errors) != 0 {
 		return []string{}, validationErrors
 	}
@@ -51,7 +51,7 @@ func downloadPolicies(request NamedConfigurationRequest) ([]string, error) {
 
 func createPolicyFileUrls(application, version string) []string {
 	var urls = []string{}
-	baseUrl := "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais"
+	baseUrl := "https://repo.adeo.no/nexus/service/local/repositories/m2internal/content/nais"
 	urls = append(urls, fmt.Sprintf("%s/%s/%s/am/app-policies.xml", baseUrl, application, version))
 	urls = append(urls, fmt.Sprintf("%s/%s/%s/am/not-enforced-urls.txt", baseUrl, application, version))
 	return urls
@@ -148,7 +148,7 @@ func cleanupLocalFiles(policyFiles []string) error {
 	}
 	return nil
 }
-func validatePolicyFiles(fileNames []string) ValidationErrors {
+func ValidatePolicyFiles(fileNames []string) ValidationErrors {
 	var validationErrors ValidationErrors
 
 	for _, fileName := range fileNames {

@@ -8,9 +8,9 @@ import (
 )
 
 func TestGetAmFiles(t *testing.T) {
-	const policypath = "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	const policypath = "https://repo.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
 		".0/am/app-policies.xml"
-	const notenforcedpath = "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
+	const notenforcedpath = "https://repo.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2" +
 		".0/am/not-enforced-urls.txt"
 	defer gock.Off()
 
@@ -50,9 +50,9 @@ func TestFetchNonExistingFilesShouldReturnError(t *testing.T) {
 	version := "2.0"
 	urls := createPolicyFileUrls(app, version)
 
-	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
+	assert.Equal(t, "https://repo.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
 		".0/am/app-policies.xml", urls[0])
-	assert.Equal(t, "http://nexus.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
+	assert.Equal(t, "https://repo.adeo.no/nexus/service/local/repositories/m2internal/content/nais/testapp/2"+
 		".0/am/not-enforced-urls.txt", urls[1])
 
 	_, err := fetchPolicyFiles(urls, app)

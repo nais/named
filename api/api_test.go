@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +45,7 @@ func TestInvalidZone(t *testing.T) {
 
 }
 
-/*func TestValidConfigurationRequestInSBS(t *testing.T) {
+func TestValidConfigurationRequestInSBS(t *testing.T) {
 	appName := "appname"
 	environment := "environmentName"
 	version := "123"
@@ -66,11 +67,11 @@ func TestInvalidZone(t *testing.T) {
 		MatchParam("zone", zone).
 		Reply(200).File("testdata/fasitAmResponse.json")
 
-	gock.New("http://nexus.adeo.no").
+	gock.New("https://repo.adeo.no").
 		Get("/nexus/service/local/repositories/m2internal/content/nais/appname/123/am/not-enforced-urls.txt").
 		Reply(200).File("testdata/not-enforced-urls.txt")
 
-	gock.New("http://nexus.adeo.no").
+	gock.New("https://repo.adeo.no").
 		Get("/nexus/service/local/repositories/m2internal/content/nais/appname/123/am/app-policies.xml").
 		Reply(200).File("testdata/app-policies.xml")
 
@@ -87,7 +88,7 @@ func TestInvalidZone(t *testing.T) {
 	assert.Equal(t, 200, rr.Code)
 	assert.True(t, gock.IsDone())
 	assert.Equal(t, "", string(rr.Body.Bytes()))
-}*/
+}
 
 func TestValidateDeploymentRequest(t *testing.T) {
 	t.Run("Empty fields should be marked invalid", func(t *testing.T) {
