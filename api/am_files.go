@@ -172,10 +172,7 @@ func validateContent(fileName string) *ValidationError {
 	buf, _ := ioutil.ReadFile(fileName)
 	kind, _ := filetype.Match(buf)
 
-	if kind.Extension == "txt" {
-		return nil
-	}
-	if kind.Extension == "unknown" {
+	if kind.Extension == "unknown" && fileName[len(fileName)-3:] != "txt"{
 		return &ValidationError{
 			"Unknown file type",
 			map[string]string{"File": fileName},
@@ -199,10 +196,5 @@ func addMatchers() {
 	var xmlType = filetype.NewType("xml", "application/xml")
 	filetype.NewMatcher(xmlType, func(buf []byte) bool {
 		return len(buf) > 1 && buf[0] == 0x3c && buf[1] == 0x3f
-	})
-
-	var txtType = filetype.NewType("txt", "application/text")
-	filetype.NewMatcher(txtType, func(buf []byte) bool {
-		return len(buf) > 1 && buf[0] == 0x74 && buf[1] == 0x65
 	})
 }
