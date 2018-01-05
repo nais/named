@@ -24,7 +24,7 @@ test:
 	${GO} test ./api/
 
 cli:
-	${GO} build -ldflags='$(LDFLAGS)' -o nais ./cli
+	${GO} build -ldflags='$(LDFLAGS)' -o name ./cli
 
 
 build:

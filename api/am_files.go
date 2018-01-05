@@ -52,6 +52,7 @@ func downloadPolicies(request NamedConfigurationRequest) ([]string, error) {
 func createPolicyFileUrls(application, version string) []string {
 	var urls = []string{}
 	baseUrl := "https://repo.adeo.no/repository/raw/nais"
+	glog.Infof(baseUrl)
 	urls = append(urls, fmt.Sprintf("%s/%s/%s/am/app-policies.xml", baseUrl, application, version))
 	urls = append(urls, fmt.Sprintf("%s/%s/%s/am/not-enforced-urls.txt", baseUrl, application, version))
 	return urls

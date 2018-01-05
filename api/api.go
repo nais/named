@@ -90,7 +90,7 @@ func init() {
 }
 
 // MakeHandler creates REST endpoint handlers
-func (api *Api) MakeHandler() http.Handler {
+func (api Api) MakeHandler() http.Handler {
 	mux := goji.NewMux()
 	mux.Handle(pat.Get("/isalive"), appHandler(api.isAlive))
 	mux.Handle(pat.Get("/metrics"), promhttp.Handler())
@@ -99,13 +99,13 @@ func (api *Api) MakeHandler() http.Handler {
 	return mux
 }
 
-func (api *Api) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
+func (api Api) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "isalive"}).Inc()
 	fmt.Fprint(w, "")
 	return nil
 }
 
-func (api *Api) version(w http.ResponseWriter, _ *http.Request) *appError {
+func (api Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 	response := map[string]string{"version": ver.Version, "revision": ver.Revision}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -115,7 +115,7 @@ func (api *Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 	return nil
 }
 
-func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
+func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "configure"}).Inc()
 	resourceRequest := createResourceRequest("OpenAM", "OpenAM")
 	namedConfigurationRequest, err := unmarshalConfigurationRequest(r.Body)
@@ -165,7 +165,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
-func (api *Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
+func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
 	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
 	var stdoutBuf bytes.Buffer
 
