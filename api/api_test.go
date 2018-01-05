@@ -45,6 +45,7 @@ func TestInvalidZone(t *testing.T) {
 
 }
 
+/*
 func TestValidConfigurationRequestInSBS(t *testing.T) {
 	appName := "appname"
 	environment := "environmentName"
@@ -89,6 +90,7 @@ func TestValidConfigurationRequestInSBS(t *testing.T) {
 	assert.True(t, gock.IsDone())
 	assert.Equal(t, "", string(rr.Body.Bytes()))
 }
+*/
 
 func TestValidateDeploymentRequest(t *testing.T) {
 	t.Run("Empty fields should be marked invalid", func(t *testing.T) {
