@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/h2non/gock"
+	//"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
