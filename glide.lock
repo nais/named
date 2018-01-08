@@ -78,7 +78,7 @@ imports:
   subpackages:
   - ssh
 - name: golang.org/x/sys
-  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  version: 1792d66dc88e503d3cb2400578221cdf1f7fe26f
   subpackages:
   - unix
 - name: gopkg.in/h2non/filetype.v1
