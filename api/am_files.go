@@ -172,7 +172,11 @@ func validateContent(fileName string) *ValidationError {
 	buf, _ := ioutil.ReadFile(fileName)
 	kind, _ := filetype.Match(buf)
 
-	if kind.Extension == "unknown" && fileName[len(fileName)-3:] != "txt"{
+	if fileName[len(fileName)-3:] == "txt" {
+		return nil
+	}
+
+	if kind.Extension == "unknown" {
 		return &ValidationError{
 			"Unknown file type",
 			map[string]string{"File": fileName},
