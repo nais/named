@@ -171,10 +171,10 @@ func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *
 
 	sshSession.Stdout = &stdoutBuf
 
-	glog.Infof("Running command %s", cmd)
+	glog.Infof("Running command %s on %s", cmd)
 	err := sshSession.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("Could not run command %s %s", cmd, err)
+		return fmt.Errorf("Could not run command %s %s %s", cmd, err, stdoutBuf.String())
 	}
 	glog.Infof("AM policy updated for %s in environment %s", request.Application,
 		request.Environment)

@@ -21,7 +21,7 @@ install:
 	${GLIDE} install --strip-vendor
 
 test:
-	${GO} test ./api/
+	${GO} test ./api/ ./cli/
 
 cli:
 	${GO} build -ldflags='$(LDFLAGS)' -o name ./cli
@@ -32,7 +32,7 @@ cli-dist:
 		-w /go/src/github.com/nais/named \
 		-e GOOS=linux \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o name-linux-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+		{GO_IMG} go build -o name-linux-amd64 -ldflags="-s -w $(LDFLAGS)" ./cli/name.go
 	sudo xz name-linux-amd64
 
 	docker run --rm -v \
@@ -40,7 +40,7 @@ cli-dist:
 		-w /go/src/github.com/nais/named \
 		-e GOOS=darwin \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o name-darwin-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+		{GO_IMG} go build -o name-darwin-amd64 -ldflags="-s -w $(LDFLAGS)" ./cli/name.go
 	sudo xz name-darwin-amd64
 
 	docker run --rm -v \
@@ -48,7 +48,7 @@ cli-dist:
 		-w /go/src/github.com/nais/named \
 		-e GOOS=windows \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o name-windows-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+		{GO_IMG} go build -o name-windows-amd64 -ldflags="-s -w $(LDFLAGS)" ./cli/name.go
 	zip -r name-windows-amd64.zip name-windows-amd64
 	sudo rm name-windows-amd64
 
