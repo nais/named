@@ -26,6 +26,31 @@ test:
 cli:
 	${GO} build -ldflags='$(LDFLAGS)' -o name ./cli
 
+cli-dist:
+	docker run --rm -v \
+		{PWD}\:/go/src/github.com/nais/naisd \
+		-w /go/src/github.com/nais/naisd \
+		-e GOOS=linux \
+		-e GOARCH=amd64 \
+		{GO_IMG} go build -o nais-linux-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
+	sudo xz nais-linux-amd64
+
+	docker run --rm -v \
+		{PWD}\:/go/src/github.com/nais/naisd \
+		-w /go/src/github.com/nais/naisd \
+		-e GOOS=darwin \
+		-e GOARCH=amd64 \
+		{GO_IMG} go build -o nais-darwin-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
+	sudo xz nais-darwin-amd64
+
+	docker run --rm -v \
+		{PWD}\:/go/src/github.com/nais/naisd \
+		-w /go/src/github.com/nais/naisd \
+		-e GOOS=windows \
+		-e GOARCH=amd64 \
+		{GO_IMG} go build -o nais-windows-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
+	zip -r nais-windows-amd64.zip nais-windows-amd64
+	sudo rm nais-windows-amd64
 
 build:
 	${GO} build -o named

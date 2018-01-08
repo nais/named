@@ -149,6 +149,8 @@ func cleanupLocalFiles(policyFiles []string) error {
 	}
 	return nil
 }
+
+// ValidatePolicyFiles validates the policy xml files, checking the file type
 func ValidatePolicyFiles(fileNames []string) ValidationErrors {
 	var validationErrors ValidationErrors
 
