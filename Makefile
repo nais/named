@@ -28,29 +28,29 @@ cli:
 
 cli-dist:
 	docker run --rm -v \
-		{PWD}\:/go/src/github.com/nais/naisd \
-		-w /go/src/github.com/nais/naisd \
+		{PWD}\:/go/src/github.com/nais/named \
+		-w /go/src/github.com/nais/named \
 		-e GOOS=linux \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o nais-linux-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
-	sudo xz nais-linux-amd64
+		{GO_IMG} go build -o name-linux-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+	sudo xz name-linux-amd64
 
 	docker run --rm -v \
-		{PWD}\:/go/src/github.com/nais/naisd \
-		-w /go/src/github.com/nais/naisd \
+		{PWD}\:/go/src/github.com/nais/named \
+		-w /go/src/github.com/nais/named \
 		-e GOOS=darwin \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o nais-darwin-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
-	sudo xz nais-darwin-amd64
+		{GO_IMG} go build -o name-darwin-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+	sudo xz name-darwin-amd64
 
 	docker run --rm -v \
-		{PWD}\:/go/src/github.com/nais/naisd \
-		-w /go/src/github.com/nais/naisd \
+		{PWD}\:/go/src/github.com/nais/named \
+		-w /go/src/github.com/nais/named \
 		-e GOOS=windows \
 		-e GOARCH=amd64 \
-		{GO_IMG} go build -o nais-windows-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/nais.go
-	zip -r nais-windows-amd64.zip nais-windows-amd64
-	sudo rm nais-windows-amd64
+		{GO_IMG} go build -o name-windows-amd64 -ldflags="-s -w (LDFLAGS)" ./cli/name.go
+	zip -r name-windows-amd64.zip name-windows-amd64
+	sudo rm name-windows-amd64
 
 build:
 	${GO} build -o named
