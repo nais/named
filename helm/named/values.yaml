@@ -10,4 +10,4 @@ request:
 limit:
   memory: 128Mi
   cpu: 500m
-version: 19.0.0
+version: 20.0.0
