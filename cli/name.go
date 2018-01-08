@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cmd "named/cli/cmd"
+	cmd "github.com/nais/named/cli/cmd"
 )
 
 func main() {
