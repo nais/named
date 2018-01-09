@@ -1,4 +1,4 @@
 apiVersion: v1
 description: NAIS Access Management Extension 
 name: named
-version: 21.0.0
+version: 22.0.0
