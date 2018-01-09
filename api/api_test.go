@@ -3,13 +3,15 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	//"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-)
+	/*	"bytes"
+		"fmt"
+		"golang.org/x/crypto/ssh"
+		"github.com/h2non/gock"*/)
 
 func TestAnIncorrectPayloadGivesError(t *testing.T) {
 	api := Api{}
@@ -46,6 +48,38 @@ func TestInvalidZone(t *testing.T) {
 }
 
 /*
+func TestSsh(t *testing.T) {
+	sshClient, sshSession, err := SshConnect("user", "pass", "hostname.com", "22")
+	if err != nil {
+		fmt.Printf("Could not get ssh session ", err)
+	}
+	defer sshSession.Close()
+	defer sshClient.Close()
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:  0, // Disable echoing
+		ssh.IGNCR: 1, // Ignore CR on input.
+	}
+
+	if err := sshSession.RequestPty("xterm", 80, 40, modes); err != nil {
+		fmt.Printf("Could not set pty")
+	}
+	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", "nais-testapp", "nais-testapp")
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
+
+	sshSession.Stdout = &stdoutBuf
+	sshSession.Stderr = &stderrBuf
+
+	fmt.Printf("Running command %s", cmd)
+	error := sshSession.Run(cmd)
+	fmt.Printf(stderrBuf.String() + "test" +  stdoutBuf.String())
+	if error != nil {
+		fmt.Errorf("Could not run command %s %s", cmd, error)
+	}
+}
+
+
 func TestValidConfigurationRequestInSBS(t *testing.T) {
 	appName := "appname"
 	environment := "environmentName"

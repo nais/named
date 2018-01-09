@@ -170,15 +170,21 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
 	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
+	modes := ssh.TerminalModes{
+		ssh.ECHO:  0, // Disable echoing
+		ssh.IGNCR: 1, // Ignore CR on input.
+	}
+
+	if err := sshSession.RequestPty("xterm", 80, 40, modes); err != nil {
+		glog.Infof("Could not set pty")
+	}
+
 	var stdoutBuf bytes.Buffer
-	var stderrBuf bytes.Buffer
 
 	sshSession.Stdout = &stdoutBuf
-	sshSession.Stderr = &stderrBuf
 
 	glog.Infof("Running command %s on %s", cmd)
 	err := sshSession.Run(cmd)
-	glog.Infof("Script failed: %s %s", stderrBuf.String(), stdoutBuf.String())
 	if err != nil {
 		return fmt.Errorf("Could not run command %s %s", cmd, err)
 	}
