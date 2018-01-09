@@ -136,6 +136,7 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		files, err := GenerateAmFiles(namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not download am policy files: %s", err)
+			return &appError{errors.New("Policy files not found"), err.Error(), http.StatusNotFound}
 		}
 
 		sshClient, sshSession, err := SshConnect(openamResource.Username, openamResource.Password, openamResource.Hostname, sshPort)
@@ -159,12 +160,15 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			return &appError{errors.New("AM policy script failed"), err.Error(), http.StatusBadRequest}
 		}
 
-	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
+		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application))
 
+	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
+		w.Write([]byte("OpenIDConnect configured for " + namedConfigurationRequest.Application))
 	} else {
 		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
 			http.StatusBadRequest}
 	}
+
 	return nil
 }
 
@@ -172,7 +176,7 @@ func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *
 	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
 
 	modes := ssh.TerminalModes{
-		ssh.ECHO:  0, // Disable echoing
+		ssh.ECHO: 0, // Disable echoing
 	}
 
 	if err := sshSession.RequestPty("xterm", 80, 40, modes); err != nil {
