@@ -170,9 +170,9 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
 	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
+
 	modes := ssh.TerminalModes{
 		ssh.ECHO:  0, // Disable echoing
-		ssh.IGNCR: 1, // Ignore CR on input.
 	}
 
 	if err := sshSession.RequestPty("xterm", 80, 40, modes); err != nil {
