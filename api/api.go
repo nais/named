@@ -183,7 +183,7 @@ func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *
 
 	sshSession.Stdout = &stdoutBuf
 
-	glog.Infof("Running command %s on %s", cmd)
+	glog.Infof("Running command %s on", cmd)
 	err := sshSession.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("Could not run command %s %s", cmd, err)
