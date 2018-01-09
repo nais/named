@@ -141,6 +141,7 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		sshClient, sshSession, err := SshConnect(openamResource.Username, openamResource.Password, openamResource.Hostname, sshPort)
 		if err != nil {
 			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
+			return &appError{errors.New("SSH session failed"), err.Error(), http.StatusBadRequest}
 		}
 		defer sshSession.Close()
 		defer sshClient.Close()
@@ -148,12 +149,14 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		err = CopyFilesToAmServer(sshClient, files, namedConfigurationRequest.Application)
 		if err != nil {
 			glog.Errorf("Could not to copy files to AM server %s", err)
+			return &appError{errors.New("AM policy files transfer failed"), err.Error(), http.StatusBadRequest}
 		}
 
 		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
 		//JobQueue <- Job{Api: api}
 		if err := api.runAmPolicyScript(namedConfigurationRequest, sshSession); err != nil {
 			glog.Errorf("Failed to run script: %s", err)
+			return &appError{errors.New("AM policy script failed"), err.Error(), http.StatusBadRequest}
 		}
 
 	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
@@ -175,8 +178,8 @@ func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *
 
 	glog.Infof("Running command %s on %s", cmd)
 	err := sshSession.Run(cmd)
+	glog.Infof("Script failed: %s %s", stderrBuf.String(), stdoutBuf.String())
 	if err != nil {
-		glog.Infof("Script failed: %s %s", stderrBuf, stdoutBuf)
 		return fmt.Errorf("Could not run command %s %s", cmd, err)
 	}
 	glog.Infof("AM policy updated for %s in environment %s", request.Application,
