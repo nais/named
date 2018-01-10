@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"net/url"
+	"github.com/golang/glog"
 )
 
 func init() {
@@ -61,6 +63,22 @@ type OpenAmResource struct {
 	Password string
 }
 
+// IssoResource contains information about the OIDC server as set in fasit
+type IssoResource struct {
+	oidcUrl string
+	oidcUsername string
+	oidcPassword string
+	oidcAgentUsername string
+	oidcAgentPassword string
+	IssoIssuerUrl string
+	IssoJwksUrl string
+}
+
+const (
+	OPENIDCONNECTALIAS = "OpenIdConnect"
+	OPENIDCONNECTAGENTALIAS = "OpenIdConnectAgent"
+)
+
 func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 	requestCounter.With(nil).Inc()
 
@@ -95,7 +113,34 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 
 }
 
-func (fasit FasitClient) getOpenAmResource(resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (OpenAmResource, AppError) {
+// GetIssoResource fetches necessary ISSO and OIDC resources from fasit
+func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone string) (IssoResource, AppError) {
+	oidcUrlResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "BaseUrl"}
+	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application,zone)
+	if fasitErr != nil {
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+	}
+	oidcResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "Credential"}
+	oidcUserResource, fasitErr := getFasitResource(fasit, oidcResourceRequest, fasitEnvironment, application, zone)
+	if fasitErr != nil {
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+	}
+
+	oidcAgentResourceRequest := ResourceRequest{OPENIDCONNECTAGENTALIAS, "Credential"}
+	oidcAgentResource, fasitErr := getFasitResource(fasit, oidcAgentResourceRequest, fasitEnvironment, application, zone)
+	if fasitErr != nil {
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+	}
+
+	resource , appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource,	oidcAgentResource)
+	if appErr != nil {
+		return IssoResource{}, appError{appErr, "Unable to map fasit resources to Isso resource", 500}
+	}
+	return resource, nil
+}
+
+// GetOpenAmResource fetches necessary OpenAM resources from fasit
+func (fasit FasitClient) GetOpenAmResource(resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (OpenAmResource, AppError) {
 	fasitResource, fasitErr := getFasitResource(fasit, resourcesRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
 		return OpenAmResource{}, appError{fasitErr, "Could not fetch fasit resource", 500}
@@ -135,6 +180,39 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 	}
 
 	return fasitResource, nil
+}
+
+func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource, oidcAgentResource FasitResource)(resource IssoResource, err error) {
+	resource.oidcUrl = oidcUrlResource.Properties["url"]
+	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"] + "/oauth2", 443)
+	if err != nil {
+		glog.Errorf("Could not parse url %s", err)
+	}
+	resource.IssoIssuerUrl = issoUrl
+	resource.IssoJwksUrl = oidcUrlResource.Properties["url"] + "/oauth2/connect/jwk_uri"
+	resource.oidcUsername = oidcUserResource.Properties["username"]
+	resource.oidcAgentUsername = oidcAgentResource.Properties["username"]
+
+	if len(oidcUserResource.Secrets) > 0 {
+		secret, err := resolveSecret(oidcUserResource.Secrets, fasit.Username, fasit.Password)
+		if err != nil {
+			errorCounter.WithLabelValues("resolve_secret").Inc()
+			return IssoResource{}, fmt.Errorf("Unable to resolve secret: %s", err)
+		}
+
+		resource.oidcPassword = secret["password"]
+	}
+	if len(oidcAgentResource.Secrets) > 0 {
+		secret, err := resolveSecret(oidcAgentResource.Secrets, fasit.Username, fasit.Password)
+		if err != nil {
+			errorCounter.WithLabelValues("resolve_secret").Inc()
+			return IssoResource{}, fmt.Errorf("Unable to resolve secret: %s", err)
+		}
+
+		resource.oidcAgentPassword = secret["password"]
+	}
+
+	return resource, nil
 }
 
 func (fasit FasitClient) mapToOpenAmResource(fasitResource FasitResource) (resource OpenAmResource, err error) {
@@ -240,6 +318,15 @@ func (fasit FasitClient) environmentNameFromNamespaceBuilder(namespace, clustern
 		return namespace + "-" + clustername
 	}
 	return namespace
+}
+
+func insertPortNumber(urlWithoutPort string, port int) (string, error) {
+	u, err := url.Parse(urlWithoutPort)
+	if err != nil {
+		return urlWithoutPort, err
+	}
+
+	return u.Scheme + "://" + u.Host + ":" + strconv.Itoa(port) + u.Path, nil
 }
 
 var httpReqsCounter = prometheus.NewCounterVec(

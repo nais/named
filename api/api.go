@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	//"github.com/forgerock/frconfig/amconfig"
 )
 
 // Api contains fasit instance and cluster to fetch AM information from
@@ -117,7 +118,6 @@ func (api Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 
 func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "configure"}).Inc()
-	resourceRequest := createResourceRequest("OpenAM", "OpenAM")
 	namedConfigurationRequest, err := unmarshalConfigurationRequest(r.Body)
 
 	if err != nil {
@@ -127,22 +127,24 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
 
 	if "sbs" == strings.ToLower(namedConfigurationRequest.Zone) {
-		openamResource, error := fasitClient.getOpenAmResource(resourceRequest, namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
+		resourceRequest := createResourceRequest("OpenAM", "OpenAM")
+		openamResource, error := fasitClient.GetOpenAmResource(resourceRequest, namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
 			namedConfigurationRequest.Zone)
 		if error != nil {
 			glog.Errorf("Could not get OpenAM resource %s", error)
+			return &appError{error, "Fasit OpenAM resource unavailable", http.StatusNotFound}
 		}
 
 		files, err := GenerateAmFiles(namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not download am policy files: %s", err)
-			return &appError{errors.New("Policy files not found"), err.Error(), http.StatusNotFound}
+			return &appError{err, "Policy files not found", http.StatusNotFound}
 		}
 
 		sshClient, sshSession, err := SshConnect(openamResource.Username, openamResource.Password, openamResource.Hostname, sshPort)
 		if err != nil {
 			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
-			return &appError{errors.New("SSH session failed"), err.Error(), http.StatusBadRequest}
+			return &appError{err, "SSH session failed", http.StatusBadRequest}
 		}
 		defer sshSession.Close()
 		defer sshClient.Close()
@@ -150,20 +152,38 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		err = CopyFilesToAmServer(sshClient, files, namedConfigurationRequest.Application)
 		if err != nil {
 			glog.Errorf("Could not to copy files to AM server %s", err)
-			return &appError{errors.New("AM policy files transfer failed"), err.Error(), http.StatusBadRequest}
+			return &appError{err, "AM policy files transfer failed", http.StatusBadRequest}
 		}
 
 		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
 		//JobQueue <- Job{Api: api}
 		if err := api.runAmPolicyScript(namedConfigurationRequest, sshSession); err != nil {
 			glog.Errorf("Failed to run script: %s", err)
-			return &appError{errors.New("AM policy script failed"), err.Error(), http.StatusBadRequest}
+			return &appError{err, "AM policy script failed", http.StatusBadRequest}
 		}
 
-		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application))
+		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application + " in " +
+			namedConfigurationRequest.Environment))
 
 	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
-		w.Write([]byte("OpenIDConnect configured for " + namedConfigurationRequest.Application))
+		issoResource, err := fasitClient.GetIssoResource(namedConfigurationRequest.Environment,
+			namedConfigurationRequest.Application, namedConfigurationRequest.Zone)
+		if err != nil {
+			glog.Errorf("Could not get OIDC resource %s", err)
+			return &appError{err, "Fasit OIDC resource unavailable", http.StatusNotFound}
+		}
+
+		am, error := GetAmConnection(issoResource)
+		if error != nil {
+			glog.Errorf("Failed to connect to AM server: %s", error)
+			return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
+		}
+
+		glog.Infof(am.BaseURL, am.User)
+
+
+		w.Write([]byte("OIDC configured for " + namedConfigurationRequest.Application + " in " +
+			namedConfigurationRequest.Environment))
 	} else {
 		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
 			http.StatusBadRequest}
@@ -187,7 +207,7 @@ func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *
 
 	sshSession.Stdout = &stdoutBuf
 
-	glog.Infof("Running command %s on", cmd)
+	glog.Infof("Running command %s", cmd)
 	err := sshSession.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("Could not run command %s %s", cmd, err)

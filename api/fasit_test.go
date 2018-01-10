@@ -29,7 +29,7 @@ func TestGettingResource(t *testing.T) {
 		MatchParam("zone", zone).
 		Reply(200).File("testdata/fasitAmResponse.json")
 
-	resource, err := fasit.getOpenAmResource(ResourceRequest{alias, resourceType}, environment, application, zone)
+	resource, err := fasit.GetOpenAmResource(ResourceRequest{alias, resourceType}, environment, application, zone)
 
 	assert.Nil(t, err)
 	assert.Equal(t, hostname, resource.Hostname)

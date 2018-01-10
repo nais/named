@@ -33,11 +33,6 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
-- name: github.com/nais/named
-  version: 70f5984fe794e7dcdf979f5aef4e86d5c7b1415c
-  subpackages:
-  - api
-  - api/version
 - name: github.com/pkg/errors
   version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
 - name: github.com/pkg/sftp

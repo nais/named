@@ -37,23 +37,8 @@ func init() {
 	crest.RegisterCreateObjectHandler([]string{POLICY}, createObjects)
 }
 
-// GetAmUser returns username for AM connection
-func GetAmUser() string {
-	return "user"
-}
-
-// GetAmPassword returns password for AM connection
-func GetAmPassword() string {
-	return "pass"
-}
-
-// GetAmUrl returns base URL for AM connection
-func GetAmUrl() string {
-	return "url"
-}
-
 func createObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err error) {
-	am, err := GetAmConnection()
+	am, err := GetAmConnection(IssoResource{})
 	if err != nil {
 		return err
 	}
