@@ -3,13 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
-	"net/url"
-	"github.com/golang/glog"
 )
 
 func init() {
@@ -65,17 +65,16 @@ type OpenAmResource struct {
 
 // IssoResource contains information about the OIDC server as set in fasit
 type IssoResource struct {
-	oidcUrl string
-	oidcUsername string
-	oidcPassword string
-	oidcAgentUsername string
+	oidcUrl           string
+	oidcUsername      string
+	oidcPassword      string
 	oidcAgentPassword string
-	IssoIssuerUrl string
-	IssoJwksUrl string
+	IssoIssuerUrl     string
+	IssoJwksUrl       string
 }
 
 const (
-	OPENIDCONNECTALIAS = "OpenIdConnect"
+	OPENIDCONNECTALIAS      = "OpenIdConnect"
 	OPENIDCONNECTAGENTALIAS = "OpenIdConnectAgent"
 )
 
@@ -116,7 +115,7 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 // GetIssoResource fetches necessary ISSO and OIDC resources from fasit
 func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone string) (IssoResource, AppError) {
 	oidcUrlResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "BaseUrl"}
-	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application,zone)
+	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
 	}
@@ -132,7 +131,7 @@ func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone str
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
 	}
 
-	resource , appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource,	oidcAgentResource)
+	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource)
 	if appErr != nil {
 		return IssoResource{}, appError{appErr, "Unable to map fasit resources to Isso resource", 500}
 	}
@@ -182,16 +181,15 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 	return fasitResource, nil
 }
 
-func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource, oidcAgentResource FasitResource)(resource IssoResource, err error) {
+func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource, oidcAgentResource FasitResource) (resource IssoResource, err error) {
 	resource.oidcUrl = oidcUrlResource.Properties["url"]
-	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"] + "/oauth2", 443)
+	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"]+"/oauth2", 443)
 	if err != nil {
 		glog.Errorf("Could not parse url %s", err)
 	}
 	resource.IssoIssuerUrl = issoUrl
 	resource.IssoJwksUrl = oidcUrlResource.Properties["url"] + "/oauth2/connect/jwk_uri"
 	resource.oidcUsername = oidcUserResource.Properties["username"]
-	resource.oidcAgentUsername = oidcAgentResource.Properties["username"]
 
 	if len(oidcUserResource.Secrets) > 0 {
 		secret, err := resolveSecret(oidcUserResource.Secrets, fasit.Username, fasit.Password)

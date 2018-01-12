@@ -26,50 +26,40 @@ type AuthNResponse struct {
 	SuccessURL string `json:"successUrl"`
 }
 
-type AgentPayload struct {
-	Username string `json:"username"`
-	Password string `json:"userpassword"`
-	AgentType string `json:"agenttype"`
-	Algorithm string `json:"com.forgerock.openam.oauth2provider.idTokenSignedResponseAlg"`
+type agentPayload struct {
+	Username        string   `json:"username"`
+	Password        string   `json:"userpassword"`
+	AgentType       string   `json:"agenttype"`
+	Algorithm       string   `json:"com.forgerock.openam.oauth2provider.idTokenSignedResponseAlg"`
 	RedirectionUris []string `json:"com.forgerock.openam.oauth2provider.redirectionURIs"`
-	Scope string `json:"com.forgerock.openam.oauth2provider.scopes"`
-	ConsentImplied string `json:"isConsentImplied"`
+	Scope           string   `json:"com.forgerock.openam.oauth2provider.scopes"`
+	ConsentImplied  string   `json:"isConsentImplied"`
 }
 
 // GetAmConnection returns connection to AM server
 func GetAmConnection(issoResource IssoResource) (am *AMConnection, err error) {
-	return open(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
+	return openAdminConnection(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
 }
 
-func open(url, user, password string) (am *AMConnection, err error) {
+func openAdminConnection(url, user, password string) (am *AMConnection, err error) {
 	am = &AMConnection{BaseURL: url, User: user, Password: password}
-	err = am.Authenticate()
+	authUrl := url + "/json/authenticate?authIndexType=service&authIndexValue=adminconsoleservice"
+	err = am.Authenticate(authUrl)
 	return am, err
 }
 
 // Authenticate connects to AM server and sets tokenID in AMConnection struct
-func (am *AMConnection) Authenticate() (error) {
-	url := am.requestURL("/json/authenticate?authIndexType=service&authIndexValue=adminconsoleservice")
+func (am *AMConnection) Authenticate(authenticationUrl string) error {
+	url := am.getRequestURL(authenticationUrl)
+	headers := map[string]string{
+		"X-OpenAM-Username": am.User,
+		"X-OpenAM-Password": am.Password,
+		"Content-Type":      "application/json"}
 
-	var jsonStr = []byte(`{}`)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-	if err != nil {
-		glog.Errorf("Could not create request: %s", err)
-	}
-
-	req.Header.Set("X-OpenAM-Username", am.User)
-	req.Header.Set("X-OpenAM-Password", am.Password)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-
-	glog.Infof("Authenticating to AM %s", url)
-	response, err := client.Do(req)
+	response, err := executeRequest(url, http.MethodPost, headers, nil)
 	if err != nil {
 		return err
 	}
-
-	defer response.Body.Close()
 
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
@@ -84,15 +74,15 @@ func (am *AMConnection) Authenticate() (error) {
 	return nil
 }
 
-func (am *AMConnection) requestURL(path string) string {
+func (am *AMConnection) getRequestURL(path string) string {
 	var strs []string
 	strs = append(strs, am.BaseURL)
 	strs = append(strs, path)
 	return strings.Join(strs, "")
 }
 
-func (am *AMConnection) newRequest(method, url string, body io.Reader) (*http.Request, error) {
-	request, err := http.NewRequest(method, am.requestURL(url), body)
+func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*http.Request, error) {
+	request, err := http.NewRequest(method, am.getRequestURL(url), body)
 	if err != nil {
 		return request, fmt.Errorf("Could not create new request, error: %v", err)
 	}
@@ -103,100 +93,99 @@ func (am *AMConnection) newRequest(method, url string, body io.Reader) (*http.Re
 	return request, nil
 }
 
-func (am *AMConnection) agentExists(agentName string) bool {
+// AgentExists verifies existence of am agent
+func (am *AMConnection) AgentExists(agentName string) bool {
 	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	req, err := http.NewRequest(http.MethodGet, agentUrl, nil)
-	if err != nil {
-		glog.Errorf("Could not create request: %s", err)
-	}
-	req.Header.Set("nav-isso", am.tokenId)
-	client := &http.Client{}
-
-	glog.Infof("Checking if agent exists %s", agentName)
-	response, err := client.Do(req)
+	headers := map[string]string{"nav-isso": am.tokenId}
+	response, err := executeRequest(agentUrl, http.MethodGet, headers, nil)
 	if err != nil {
 		glog.Errorf("Could not execute request: %s", err)
 		return false
 	}
-
-	defer response.Body.Close()
 
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
 
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode == 200 {
+		glog.Infof(agentName + " already exists")
 		return true
 	}
+	glog.Infof(agentName + " does not exist")
 	return false
 }
 
-func (am *AMConnection) createAgent(redirectionUris []string) (bool, error) {
-	agentUrl := am.BaseURL + "/json/agents/"
-	payload, err := json.Marshal(buildAgentPayload(am, redirectionUris))
-
-	req, err := http.NewRequest(http.MethodPost, agentUrl, bytes.NewBuffer(payload))
+// CreateAgent creates am agent on isso server
+func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string) (bool, error) {
+	agentUrl := am.BaseURL + "/json/agents/?_action=create"
+	headers := map[string]string{"nav-isso": am.tokenId}
+	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
+	response, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
-	glog.Errorf("Could not create request: %s", err)
+		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
 	}
-	req.Header.Set("nav-isso", am.tokenId)
-	client := &http.Client{}
-
-	response, err := client.Do(req)
-	if err != nil {
-	return false, fmt.Errorf("Could not execute request to create agent: %s", err)
-	}
-
-	defer response.Body.Close()
 
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
 
-	err = json.Unmarshal(body, &a)
+	_ = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return false, fmt.Errorf("Agent %s could not be created: %s", err)
+		return false, fmt.Errorf("Agent %s could not be created: %s", agentName, err)
 	}
+	glog.Infof("Agent %s created", agentName)
 	return true, nil
-
 }
 
-func buildAgentPayload(am *AMConnection, uris []string) AgentPayload {
-	agentPayload := AgentPayload{
-		Username: am.User,
-		Password: am.Password,
-		AgentType: "OAuth2Client",
-		Algorithm: "RS256",
-		Scope: "[0]=openid",
-		ConsentImplied: "true",
-		RedirectionUris: []string{},
-	}
-
-	return agentPayload
-}
-
-func (am *AMConnection) deleteAgent(agentName string) error {
+// DeleteAgent deletes am agent on isso server
+func (am *AMConnection) DeleteAgent(agentName string) error {
 	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	req, err := http.NewRequest(http.MethodDelete, agentUrl, nil)
-	if err != nil {
-		glog.Errorf("Could not create request: %s", err)
-	}
-	req.Header.Set("nav-isso", am.tokenId)
-	client := &http.Client{}
-
-	glog.Infof("Deleting agent %s", agentName)
-	response, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("Could not execute request to delete agent: %s", err)
-	}
-
-	defer response.Body.Close()
+	headers := map[string]string{"nav-isso": am.tokenId}
+	response, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
 
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
 
-	err = json.Unmarshal(body, &a)
+	_ = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
 		return fmt.Errorf("Agent %s could not be deleted: %s", agentName, err)
 	}
 	return nil
+}
+
+func executeRequest(url, method string, headers map[string]string, body io.Reader) (*http.Response,
+	error) {
+	glog.Infof("URL: " + url)
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		glog.Errorf("Could not create request: %s", err)
+	}
+
+	for hKey, hValue := range headers {
+		req.Header.Set(hKey, hValue)
+	}
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Could not execute request: %s", err)
+	}
+
+	defer response.Body.Close()
+
+	return response, nil
+}
+
+func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentPayload {
+	agentPayload := agentPayload{
+		Username:        agentName,
+		Password:        am.Password,
+		AgentType:       "OAuth2Client",
+		Algorithm:       "RS256",
+		Scope:           "[0]=openid",
+		ConsentImplied:  "true",
+		RedirectionUris: uris,
+	}
+
+	return agentPayload
 }

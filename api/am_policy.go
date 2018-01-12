@@ -43,7 +43,7 @@ type PolicyResultList struct {
 func ListPolicy(am *AMConnection) ([]Policy, error) {
 
 	client := &http.Client{}
-	req, err := am.newRequest("GET", "/json/policies?_queryFilter=true", nil)
+	req, err := am.createNewRequest("GET", "/json/policies?_queryFilter=true", nil)
 	if err != nil {
 		glog.Errorf("Could not create request: %s", err)
 	}
@@ -97,7 +97,7 @@ func policytoYAML(policies []Policy) {
 
 // ExportXacmlPolicies exports all the policies as a XACML policy set
 func (am *AMConnection) ExportXacmlPolicies() (string, error) {
-	req, err := am.newRequest("GET", "/xacml/policies", nil)
+	req, err := am.createNewRequest("GET", "/xacml/policies", nil)
 	if err != nil {
 		glog.Errorf("Could not create request: %s", err)
 	}
@@ -124,7 +124,7 @@ func (am *AMConnection) ExportXacmlPolicies() (string, error) {
 // ExportPolicies exports all the policies as a JSON or YAML policy set string
 func (am *AMConnection) ExportPolicies(format, realm string) (out string, err error) {
 	url := fmt.Sprintf("/json/policies?realm=%s&_queryFilter=true", realm)
-	req, err := am.newRequest("GET", url, nil)
+	req, err := am.createNewRequest("GET", url, nil)
 
 	result, err := crest.GetCRESTResult(req)
 	if err != nil {
@@ -216,7 +216,7 @@ func (am *AMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, r
 	json, err := json.Marshal(p)
 	r := bytes.NewReader(json)
 	url := fmt.Sprintf("/json%s/policies?_action=create", realm)
-	req, err := am.newRequest("POST", url, r)
+	req, err := am.createNewRequest("POST", url, r)
 	if err != nil {
 		glog.Errorf("Could not create request: %s", err)
 	}
@@ -233,7 +233,7 @@ func (am *AMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, r
 func (am *AMConnection) DeletePolicy(name, realm string) (err error) {
 	url := fmt.Sprintf("/json%s/policies/%s", realm, name)
 
-	req, err := am.newRequest("DELETE", url, nil)
+	req, err := am.createNewRequest("DELETE", url, nil)
 	if err != nil {
 		return err
 	}

@@ -181,7 +181,6 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 		glog.Infof(am.BaseURL, am.User)
 
-
 		w.Write([]byte("OIDC configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))
 	} else {
@@ -235,7 +234,7 @@ func (r NamedConfigurationRequest) Validate() []error {
 		}
 	}
 
-	if r.Zone != "fss" && r.Zone != "sbs" && r.Zone != "iapp" {
+	if r.Zone != "fss" && r.Zone != "sbs" && r.Zone != "SBS" && r.Zone != "FSS" {
 		errs = append(errs, errors.New("Zone can only be fss, sbs or iapp"))
 	}
 

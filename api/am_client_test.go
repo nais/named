@@ -5,17 +5,86 @@ import (
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"bytes"
+	"encoding/json"
 )
 
 var baseUrl = "https://server.domain.com"
+var authUrl = "/json/authenticate"
+var policyUrl = "/json/policies"
 var amc = AMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
+
+func TestGetRequestUrlShouldReturnConcatenatedString(t *testing.T) {
+	assert.Equal(t, baseUrl+authUrl,amc.getRequestURL(authUrl))
+}
+
+func TestCreateNewRequestShouldReturnRequestWIthCookie(t *testing.T) {
+	testRequest, err := amc.createNewRequest("GET", baseUrl+policyUrl, nil)
+	assert.Nil(t, err)
+	assert.True(t, testRequest.Header.Get("Content-type") == "application/json")
+	assert.True(t, len(testRequest.Cookies()) == 1)
+}
+
+func TestAgentExists(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/json/agents/testAgent").
+		MatchHeader("nav-isso", amc.tokenId).
+		Reply(200)
+
+	gock.New(baseUrl).
+		Get("/json/agents/noTestAgent").
+		MatchHeader("nav-isso", amc.tokenId).
+		Reply(404)
+
+	assert.True(t, amc.AgentExists("testAgent"))
+	assert.False(t, amc.AgentExists("noTestAgent"))
+}
+
+func TestCreateAgent(t *testing.T) {
+
+	payload, _ := json.Marshal(buildAgentPayload(&amc, "testAgent", []string{}))
+
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Post("/json/agents/").
+		MatchHeader("nav-isso", amc.tokenId).
+		MatchParam("_action", "create").
+		Body(bytes.NewReader(payload)).
+		Reply(200)
+
+	created, err := amc.CreateAgent("testAgent", []string{})
+	assert.True(t, created)
+	assert.Nil(t, err)
+}
+
+func TestDeleteAgent(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Delete("/json/agents/testAgent").
+		MatchHeader("nav-isso", amc.tokenId).
+		Reply(200)
+
+	gock.New(baseUrl).
+		Delete("/json/agents/noTestAgent").
+		MatchHeader("nav-isso", amc.tokenId).
+		Reply(404)
+
+	assert.Nil(t, amc.DeleteAgent("testAgent"))
+	assert.NotNil(t, amc.DeleteAgent("noTestAgent"))
+}
 
 func TestRest(t *testing.T) {
 
 	defer gock.Off()
 
 	gock.New(baseUrl).
-		Post("/json/authenticate").
+		Post(authUrl).
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
@@ -27,7 +96,7 @@ func TestRest(t *testing.T) {
 		Reply(200).
 		File("testdata/amResourceTypes.json")
 
-	err := amc.Authenticate()
+	err := amc.Authenticate(baseUrl + authUrl)
 	if err != nil {
 		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
 	}
@@ -50,7 +119,7 @@ func TestJsonExport(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(baseUrl).
-		Post("/json/authenticate").
+		Post(authUrl).
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
@@ -62,7 +131,7 @@ func TestJsonExport(t *testing.T) {
 		Reply(200).
 		File("testdata/amPolicyExport.json")
 
-	if err := amc.Authenticate(); err != nil {
+	if err := amc.Authenticate(baseUrl + authUrl); err != nil {
 		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
 	}
 

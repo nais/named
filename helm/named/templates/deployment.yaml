@@ -2,6 +2,11 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: named
+  lables: 
+    app: named 
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:

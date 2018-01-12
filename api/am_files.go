@@ -108,7 +108,7 @@ func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, applicatio
 	for _, policyFile := range policyFiles {
 		srcFile, err := os.Open(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not open file %s: %s", policyFile, err)
+			return fmt.Errorf("Could not openAdminConnection file %s: %s", policyFile, err)
 		}
 
 		srcFileInfo, err := srcFile.Stat()

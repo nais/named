@@ -56,7 +56,7 @@ func createObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err er
 // ListResourceTypes returns the available resource types from the AM server
 func (am *AMConnection) ListResourceTypes() ([]ResourceType, error) {
 	client := &http.Client{}
-	request, err := am.newRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
+	request, err := am.createNewRequest("GET", "/json/resourcetypes?_queryFilter=true", nil)
 	//dump, err := httputil.DumpRequestOut(request, true)
 	if err != nil {
 		glog.Errorf("Failed to create request: %s", err)
