@@ -96,7 +96,7 @@ func TestRest(t *testing.T) {
 		Reply(200).
 		File("testdata/amResourceTypes.json")
 
-	err := amc.Authenticate(baseUrl + authUrl)
+	err := amc.Authenticate()
 	if err != nil {
 		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
 	}
@@ -131,7 +131,7 @@ func TestJsonExport(t *testing.T) {
 		Reply(200).
 		File("testdata/amPolicyExport.json")
 
-	if err := amc.Authenticate(baseUrl + authUrl); err != nil {
+	if err := amc.Authenticate(); err != nil {
 		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
 	}
 

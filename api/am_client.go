@@ -41,20 +41,19 @@ func GetAmConnection(issoResource IssoResource) (am *AMConnection, err error) {
 	return openAdminConnection(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
 }
 
-func openAdminConnection(url, user, password string) (am *AMConnection, err error) {
-	am = &AMConnection{BaseURL: url, User: user, Password: password}
-	authUrl := url + "/json/authenticate?authIndexType=service&authIndexValue=adminconsoleservice"
-	err = am.Authenticate(authUrl)
+func openAdminConnection(url, username, password string) (am *AMConnection, err error) {
+	am = &AMConnection{BaseURL: url, User: username, Password: password}
+	err = am.Authenticate()
 	return am, err
 }
 
 // Authenticate connects to AM server and sets tokenID in AMConnection struct
-func (am *AMConnection) Authenticate(authenticationUrl string) error {
-	url := am.getRequestURL(authenticationUrl)
+func (am *AMConnection) Authenticate() error {
+	url := am.getRequestURL("/json/authenticate?authIndexType=service&authIndexValue=adminconsoleservice")
 	headers := map[string]string{
-		"X-OpenAM-Username": am.User,
-		"X-OpenAM-Password": am.Password,
-		"Content-Type":      "application/json"}
+		"X-Openam-Username": am.User,
+		"X-Openam-Password": am.Password,
+		"Cache-Control": "no-cache"}
 
 	response, err := executeRequest(url, http.MethodPost, headers, nil)
 	if err != nil {
@@ -154,14 +153,13 @@ func (am *AMConnection) DeleteAgent(agentName string) error {
 
 func executeRequest(url, method string, headers map[string]string, body io.Reader) (*http.Response,
 	error) {
-	glog.Infof("URL: " + url)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		glog.Errorf("Could not create request: %s", err)
 	}
 
 	for hKey, hValue := range headers {
-		req.Header.Set(hKey, hValue)
+		req.Header.Set(hKey, fmt.Sprintf("%q", hValue))
 	}
 
 	client := &http.Client{}

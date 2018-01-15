@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // ValidationErrors contains all validation errors
@@ -136,6 +137,31 @@ func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, applicatio
 	}
 
 	cleanupLocalFiles(policyFiles)
+	return nil
+}
+
+// CopyFilesToAmServer sftps policy files to desired AM host
+func UpdatePolicyFiles(policyFiles []string, environment string) error {
+	siteName := "tjenester.nav.no"
+	if strings.ToLower(environment[:1]) != "p" {
+		siteName = "tjenester-" + environment + ".nav.no"
+	}
+
+	for _, policyFile := range policyFiles {
+		read, err := ioutil.ReadFile(policyFile)
+		if err != nil {
+			return fmt.Errorf("Could not read file %s", policyFile)
+		}
+
+		newContents := strings.Replace(string(read), "${DomainName}", siteName, -1)
+
+		err = ioutil.WriteFile(policyFile, []byte(newContents), 0)
+		if err != nil {
+			return fmt.Errorf("Could not write file %s", policyFile)
+		}
+
+	}
+
 	return nil
 }
 

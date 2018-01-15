@@ -119,6 +119,7 @@ func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone str
 	if fasitErr != nil {
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
 	}
+
 	oidcResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "Credential"}
 	oidcUserResource, fasitErr := getFasitResource(fasit, oidcResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
@@ -323,7 +324,6 @@ func insertPortNumber(urlWithoutPort string, port int) (string, error) {
 	if err != nil {
 		return urlWithoutPort, err
 	}
-
 	return u.Scheme + "://" + u.Host + ":" + strconv.Itoa(port) + u.Path, nil
 }
 

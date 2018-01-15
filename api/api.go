@@ -146,8 +146,15 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
 			return &appError{err, "SSH session failed", http.StatusBadRequest}
 		}
+
 		defer sshSession.Close()
 		defer sshClient.Close()
+
+		err = UpdatePolicyFiles(files, namedConfigurationRequest.Environment)
+		if err!= nil {
+			glog.Errorf("Could not update policy files with correct site name %s", err)
+			return &appError{err, "AM policy files could not be updated", http.StatusBadRequest}
+		}
 
 		err = CopyFilesToAmServer(sshClient, files, namedConfigurationRequest.Application)
 		if err != nil {

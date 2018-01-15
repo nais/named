@@ -5,6 +5,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+	"io/ioutil"
+	"strings"
 )
 
 func TestGetAmFiles(t *testing.T) {
@@ -22,6 +24,19 @@ func TestGetAmFiles(t *testing.T) {
 	assert.Equal(t, 2, len(files))
 	assert.Equal(t, "/tmp/testapp/app-policies.xml", files[0])
 	assert.Equal(t, "/tmp/testapp/not-enforced-urls.txt", files[1])
+}
+
+func TestUpdatePolicyFiles(t *testing.T) {
+	policyFiles := []string{"testdata/app-policies.xml", "testdata/not-enforced-urls.txt"}
+	environment := "u653"
+
+	err := UpdatePolicyFiles(policyFiles, environment)
+	assert.Nil(t, err)
+	file1, _ := ioutil.ReadFile(policyFiles[0])
+	file2, _ := ioutil.ReadFile(policyFiles[1])
+	assert.False(t, strings.Contains(string(file1), "DomainName"))
+	assert.False(t, strings.Contains(string(file2), "DomainName"))
+	assert.True(t, strings.Contains(string(file1), "tjenester-u653.nav.no"))
 }
 
 func TestValidFileGivesNoError(t *testing.T) {
