@@ -60,7 +60,7 @@ linux:
 		-e GOOS=linux \
 		-e CGO_ENABLED=0 \
 		-v ${PWD}:/go/src/github.com/nais/named \
-		-w /go/src/named ${GO_IMG} \
+		-w /go/src/github.com/nais/named ${GO_IMG} \
 		go build -a -installsuffix cgo -ldflags '-s $(LDFLAGS)' -o named
 
 docker-minikube-build:
