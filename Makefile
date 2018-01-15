@@ -59,7 +59,7 @@ linux:
 	docker run --rm \
 		-e GOOS=linux \
 		-e CGO_ENABLED=0 \
-		-v ${PWD}:/go/src/named \
+		-v ${PWD}:/go/src/github.com/nais/named \
 		-w /go/src/named ${GO_IMG} \
 		go build -a -installsuffix cgo -ldflags '-s $(LDFLAGS)' -o named
 

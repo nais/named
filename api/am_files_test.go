@@ -3,10 +3,10 @@ package api
 import (
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 	"io/ioutil"
+	"os"
 	"strings"
+	"testing"
 )
 
 func TestGetAmFiles(t *testing.T) {

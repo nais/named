@@ -74,8 +74,8 @@ type IssoResource struct {
 }
 
 const (
-	OPENIDCONNECTALIAS      = "OpenIdConnect"
-	OPENIDCONNECTAGENTALIAS = "OpenIdConnectAgent"
+	openidconnectalias      = "OpenIdConnect"
+	openidconnectagentalias = "OpenIdConnectAgent"
 )
 
 func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
@@ -114,19 +114,19 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 
 // GetIssoResource fetches necessary ISSO and OIDC resources from fasit
 func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone string) (IssoResource, AppError) {
-	oidcUrlResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "BaseUrl"}
+	oidcUrlResourceRequest := ResourceRequest{openidconnectalias, "BaseUrl"}
 	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
 	}
 
-	oidcResourceRequest := ResourceRequest{OPENIDCONNECTALIAS, "Credential"}
+	oidcResourceRequest := ResourceRequest{openidconnectalias, "Credential"}
 	oidcUserResource, fasitErr := getFasitResource(fasit, oidcResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
 	}
 
-	oidcAgentResourceRequest := ResourceRequest{OPENIDCONNECTAGENTALIAS, "Credential"}
+	oidcAgentResourceRequest := ResourceRequest{openidconnectagentalias, "Credential"}
 	oidcAgentResource, fasitErr := getFasitResource(fasit, oidcAgentResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
 		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}

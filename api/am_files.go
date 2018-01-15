@@ -140,7 +140,7 @@ func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, applicatio
 	return nil
 }
 
-// CopyFilesToAmServer sftps policy files to desired AM host
+// UpdatePolicyFiles replaces ${DomainName} with correct site name in policy files
 func UpdatePolicyFiles(policyFiles []string, environment string) error {
 	siteName := "tjenester.nav.no"
 	if strings.ToLower(environment[:1]) != "p" {

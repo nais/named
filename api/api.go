@@ -151,7 +151,7 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		defer sshClient.Close()
 
 		err = UpdatePolicyFiles(files, namedConfigurationRequest.Environment)
-		if err!= nil {
+		if err != nil {
 			glog.Errorf("Could not update policy files with correct site name %s", err)
 			return &appError{err, "AM policy files could not be updated", http.StatusBadRequest}
 		}

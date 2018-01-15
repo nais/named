@@ -1,12 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/golang/glog"
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"bytes"
-	"encoding/json"
 )
 
 var baseUrl = "https://server.domain.com"
@@ -15,7 +15,7 @@ var policyUrl = "/json/policies"
 var amc = AMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
 
 func TestGetRequestUrlShouldReturnConcatenatedString(t *testing.T) {
-	assert.Equal(t, baseUrl+authUrl,amc.getRequestURL(authUrl))
+	assert.Equal(t, baseUrl+authUrl, amc.getRequestURL(authUrl))
 }
 
 func TestCreateNewRequestShouldReturnRequestWIthCookie(t *testing.T) {

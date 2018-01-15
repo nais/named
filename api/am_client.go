@@ -53,7 +53,7 @@ func (am *AMConnection) Authenticate() error {
 	headers := map[string]string{
 		"X-Openam-Username": am.User,
 		"X-Openam-Password": am.Password,
-		"Cache-Control": "no-cache"}
+		"Cache-Control":     "no-cache"}
 
 	response, err := executeRequest(url, http.MethodPost, headers, nil)
 	if err != nil {
@@ -105,7 +105,7 @@ func (am *AMConnection) AgentExists(agentName string) bool {
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
 
-	err = json.Unmarshal(body, &a)
+	_ = json.Unmarshal(body, &a)
 	if response.StatusCode == 200 {
 		glog.Infof(agentName + " already exists")
 		return true
