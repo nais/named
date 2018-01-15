@@ -1,1 +1,1 @@
-https://${DomainName}/testapp/login*
+https://tjenester-u653.nav.no/testapp/login*

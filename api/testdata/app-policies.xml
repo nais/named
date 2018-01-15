@@ -8,7 +8,7 @@ PUBLIC "-//OpenSSO Policy Administration DTD//EN"
 	<Policy name="Draco_001" referralPolicy="false" active="true" >
 		<Rule name="rule_Draco_001_01">
 			<ServiceName name="iPlanetAMWebAgentService" />
-			<ResourceName name="https://${DomainName}/draco/*" />
+			<ResourceName name="https://tjenester-u653.nav.no/draco/*" />
 			<AttributeValuePair>
 				<Attribute name="POST" />
 				<Value>allow</Value>
@@ -20,7 +20,7 @@ PUBLIC "-//OpenSSO Policy Administration DTD//EN"
 		</Rule>
 		<Rule name="rule_Draco_001_02">
 			<ServiceName name="iPlanetAMWebAgentService" />
-			<ResourceName name="https://${DomainName}/draco/*?*" />
+			<ResourceName name="https://tjenester-u653.nav.no/draco/*?*" />
 			<AttributeValuePair>
 				<Attribute name="POST" />
 				<Value>allow</Value>
@@ -32,7 +32,7 @@ PUBLIC "-//OpenSSO Policy Administration DTD//EN"
 		</Rule>
 		<Rule name="rule_Draco_001_03">
 			<ServiceName name="iPlanetAMWebAgentService" />
-			<ResourceName name="https://${DomainName}/draco" />
+			<ResourceName name="https://tjenester-u653.nav.no/draco" />
 			<AttributeValuePair>
 				<Attribute name="POST" />
 				<Value>allow</Value>
@@ -44,7 +44,7 @@ PUBLIC "-//OpenSSO Policy Administration DTD//EN"
 		</Rule>
 		<Rule name="rule_Draco_001_04">
 			<ServiceName name="iPlanetAMWebAgentService" />
-			<ResourceName name="https://${DomainName}/draco/" />
+			<ResourceName name="https://tjenester-u653.nav.no/draco/" />
 			<AttributeValuePair>
 				<Attribute name="POST" />
 				<Value>allow</Value>
