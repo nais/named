@@ -3,13 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
+
+	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func init() {
@@ -71,6 +71,10 @@ type IssoResource struct {
 	oidcAgentPassword string
 	IssoIssuerUrl     string
 	IssoJwksUrl       string
+	loadbalancerUrl   string
+	contextRoots      []string
+	nodes             []string
+	createLocalhost   bool
 }
 
 const (
@@ -113,29 +117,38 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 }
 
 // GetIssoResource fetches necessary ISSO and OIDC resources from fasit
-func (fasit FasitClient) GetIssoResource(fasitEnvironment, application, zone string) (IssoResource, AppError) {
+func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest) (IssoResource, AppError) {
+	fasitEnvironment := request.Environment
+	application := request.Application
+	zone := request.Zone
+
 	oidcUrlResourceRequest := ResourceRequest{openidconnectalias, "BaseUrl"}
 	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
-		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource openid base url", 404}
 	}
 
 	oidcResourceRequest := ResourceRequest{openidconnectalias, "Credential"}
 	oidcUserResource, fasitErr := getFasitResource(fasit, oidcResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
-		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource openid credential", 404}
 	}
 
 	oidcAgentResourceRequest := ResourceRequest{openidconnectagentalias, "Credential"}
 	oidcAgentResource, fasitErr := getFasitResource(fasit, oidcAgentResourceRequest, fasitEnvironment, application, zone)
 	if fasitErr != nil {
-		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource isso-rp-use", 404}
+		return IssoResource{}, appError{fasitErr, "Could not fetch fasit resource openid agent credential", 404}
 	}
 
-	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource)
+	loadbalancerResourceRequest := ResourceRequest{"loadbalancer:" + application, "BaseUrl"}
+	loadbalancerResource, _ := getFasitResource(fasit, loadbalancerResourceRequest, fasitEnvironment,
+		application, zone)
+
+	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource, loadbalancerResource)
 	if appErr != nil {
 		return IssoResource{}, appError{appErr, "Unable to map fasit resources to Isso resource", 500}
 	}
+
 	return resource, nil
 }
 
@@ -182,7 +195,8 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 	return fasitResource, nil
 }
 
-func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource, oidcAgentResource FasitResource) (resource IssoResource, err error) {
+func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource,
+	oidcAgentResource FasitResource, loadbalancerResource FasitResource) (resource IssoResource, err error) {
 	resource.oidcUrl = oidcUrlResource.Properties["url"]
 	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"]+"/oauth2", 443)
 	if err != nil {
@@ -211,6 +225,8 @@ func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUs
 		resource.oidcAgentPassword = secret["password"]
 	}
 
+	resource.loadbalancerUrl = loadbalancerResource.Properties["url"]
+
 	return resource, nil
 }
 
@@ -228,30 +244,6 @@ func (fasit FasitClient) mapToOpenAmResource(fasitResource FasitResource) (resou
 		resource.Password = secret["password"]
 	}
 	return resource, nil
-}
-
-// GetFasitEnvironment returns fasit environment string from fasit REST endpoint
-func (fasit FasitClient) GetFasitEnvironment(environmentName string) (string, error) {
-	requestCounter.With(nil).Inc()
-	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/environments/"+environmentName, nil)
-	if err != nil {
-		return "", fmt.Errorf("Could not create request: %s", err)
-	}
-
-	resp, appErr := fasit.doRequest(req)
-	if appErr != nil {
-		return "", appErr
-	}
-
-	type FasitEnvironment struct {
-		EnvironmentClass string `json:"environmentclass"`
-	}
-	var fasitEnvironment FasitEnvironment
-	if err := json.Unmarshal(resp, &fasitEnvironment); err != nil {
-		return "", fmt.Errorf("Unable to read environmentclass from response: %s", err)
-	}
-
-	return fasitEnvironment.EnvironmentClass, nil
 }
 
 func resolveSecret(secrets map[string]map[string]string, username string, password string) (map[string]string, error) {
@@ -306,17 +298,6 @@ func (fasit FasitClient) buildRequest(method, path string, queryParams map[strin
 	}
 	req.URL.RawQuery = q.Encode()
 	return req, nil
-}
-
-func (fasit FasitClient) environmentNameFromNamespaceBuilder(namespace, clustername string) string {
-	re := regexp.MustCompile(`^[utqp][0-9]*$`)
-
-	if namespace == "default" || len(namespace) == 0 {
-		return clustername
-	} else if !re.MatchString(namespace) {
-		return namespace + "-" + clustername
-	}
-	return namespace
 }
 
 func insertPortNumber(urlWithoutPort string, port int) (string, error) {

@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"github.com/golang/glog"
 	ver "github.com/nais/named/api/version"
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,10 +17,6 @@ import (
 	"goji.io"
 	"goji.io/pat"
 	"golang.org/x/crypto/ssh"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"strings"
 	//"github.com/forgerock/frconfig/amconfig"
 )
 
@@ -27,12 +28,14 @@ type Api struct {
 
 // NamedConfigurationRequest contains the information of the application to configure in AM
 type NamedConfigurationRequest struct {
-	Application string `json:"application"`
-	Version     string `json:"version"`
-	Environment string `json:"environment"`
-	Zone        string `json:"zone"`
-	Username    string `json:"username"`
-	Password    string `json:"password"`
+	Application  string   `json:"application"`
+	Version      string   `json:"version"`
+	Environment  string   `json:"environment"`
+	Zone         string   `json:"zone"`
+	Username     string   `json:"username"`
+	Password     string   `json:"password"`
+	IngressUrl   string   `json:"ingressurl"`
+	ContextRoots []string `json:"contextroots"`
 }
 
 // AppError contains error and response code
@@ -47,7 +50,11 @@ type appError struct {
 	StatusCode    int
 }
 
-const sshPort = "22"
+const (
+	sshPort = "22"
+	zoneFss = "fss"
+	zoneSbs = "sbs"
+)
 
 // NewApi initializes fasit instance information
 func NewApi(fasitUrl, clusterName string) *Api {
@@ -126,22 +133,21 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
 
-	if "sbs" == strings.ToLower(namedConfigurationRequest.Zone) {
-		resourceRequest := createResourceRequest("OpenAM", "OpenAM")
-		openamResource, error := fasitClient.GetOpenAmResource(resourceRequest, namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
+	if zoneSbs == strings.ToLower(namedConfigurationRequest.Zone) {
+		openamResource, error := fasitClient.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"), namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
 			namedConfigurationRequest.Zone)
 		if error != nil {
 			glog.Errorf("Could not get OpenAM resource %s", error)
 			return &appError{error, "Fasit OpenAM resource unavailable", http.StatusNotFound}
 		}
 
-		files, err := GenerateAmFiles(namedConfigurationRequest)
+		files, err := GenerateAmFiles(&namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not download am policy files: %s", err)
 			return &appError{err, "Policy files not found", http.StatusNotFound}
 		}
 
-		sshClient, sshSession, err := SshConnect(openamResource.Username, openamResource.Password, openamResource.Hostname, sshPort)
+		sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
 		if err != nil {
 			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
 			return &appError{err, "SSH session failed", http.StatusBadRequest}
@@ -172,21 +178,28 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))
 
-	} else if "fss" == strings.ToLower(namedConfigurationRequest.Zone) {
-		issoResource, err := fasitClient.GetIssoResource(namedConfigurationRequest.Environment,
-			namedConfigurationRequest.Application, namedConfigurationRequest.Zone)
+	} else if zoneFss == strings.ToLower(namedConfigurationRequest.Zone) {
+		agentName := fmt.Sprintf("nais-%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
+		issoResource, err := fasitClient.GetIssoResource(&namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not get OIDC resource %s", err)
 			return &appError{err, "Fasit OIDC resource unavailable", http.StatusNotFound}
 		}
 
-		am, error := GetAmConnection(issoResource)
+		am, error := GetAmConnection(&issoResource)
 		if error != nil {
 			glog.Errorf("Failed to connect to AM server: %s", error)
 			return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
 		}
 
-		glog.Infof(am.BaseURL, am.User)
+		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
+		if am.AgentExists(agentName) {
+			glog.Infof("Deleting agent %s before re-creating it", agentName)
+			am.DeleteAgent(agentName)
+		}
+
+		glog.Infof("Creating agent %s", agentName)
+		am.CreateAgent(agentName, &issoResource, &namedConfigurationRequest)
 
 		w.Write([]byte("OIDC configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))

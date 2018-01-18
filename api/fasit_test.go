@@ -2,9 +2,10 @@ package api
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGettingResource(t *testing.T) {
@@ -50,27 +51,4 @@ func (fasit FakeFasitClient) getScopedResource(resourcesRequest ResourceRequest,
 	default:
 		return OpenAmResource{}, nil
 	}
-}
-
-func TestGetFasitEnvironment(t *testing.T) {
-	namespace := "namespace"
-
-	defer gock.Off()
-	gock.New("https://fasit.local").
-		Get("/api/v2/environments/" + namespace).
-		Reply(200).
-		JSON(map[string]string{"environmentclass": "u"})
-
-	fasit := FasitClient{"https://fasit.local", "", ""}
-	t.Run("Returns an error if environment isn't found", func(t *testing.T) {
-		_, err := fasit.GetFasitEnvironment("notExisting")
-		assert.Error(t, err)
-		assert.False(t, gock.IsDone())
-	})
-	t.Run("Returns no error if environment is found", func(t *testing.T) {
-		_, err := fasit.GetFasitEnvironment(namespace)
-		assert.NoError(t, err)
-		assert.True(t, gock.IsDone())
-	})
-
 }

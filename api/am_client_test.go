@@ -2,11 +2,13 @@ package api
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"testing"
+
 	"github.com/golang/glog"
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var baseUrl = "https://server.domain.com"
@@ -56,7 +58,7 @@ func TestCreateAgent(t *testing.T) {
 		Body(bytes.NewReader(payload)).
 		Reply(200)
 
-	created, err := amc.CreateAgent("testAgent", []string{})
+	created, err := amc.CreateAgent("testAgent", &IssoResource{}, &NamedConfigurationRequest{})
 	assert.True(t, created)
 	assert.Nil(t, err)
 }
@@ -79,6 +81,23 @@ func TestDeleteAgent(t *testing.T) {
 	assert.NotNil(t, amc.DeleteAgent("noTestAgent"))
 }
 
+func TestFormatAmHeaderString(t *testing.T) {
+	headerString := "user"
+	formattedHeaderString := FormatAmHeaderString(headerString)
+	expectedResult := "=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(headerString)) + "?="
+	assert.Equal(t, expectedResult, formattedHeaderString)
+}
+
+func TestCreateRedirectionUris(t *testing.T) {
+	request := NamedConfigurationRequest{ContextRoots: []string{"/testapp", "testapp2"}, IngressUrl: "nais.test.domain"}
+	uriList := CreateRedirectionUris("test.test.domain", &request)
+	assert.Len(t, uriList, 4)
+	assert.Contains(t, uriList, "[0]=https://nais.test.domain/testapp")
+	assert.Contains(t, uriList, "[1]=https://test.test.domain/testapp")
+	assert.Contains(t, uriList, "[2]=https://nais.test.domain/testapp2")
+	assert.Contains(t, uriList, "[3]=https://test.test.domain/testapp2")
+}
+
 func TestRest(t *testing.T) {
 
 	defer gock.Off()
@@ -88,6 +107,9 @@ func TestRest(t *testing.T) {
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
+		MatchHeader("Cache-Control", "no-cache").
+		MatchParam("authIndexType", "service").
+		MatchParam("authIndexValue", "adminconsoleservice").
 		Reply(200)
 
 	gock.New(baseUrl).

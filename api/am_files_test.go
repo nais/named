@@ -1,12 +1,13 @@
 package api
 
 import (
-	"github.com/h2non/gock"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/h2non/gock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetAmFiles(t *testing.T) {
@@ -18,7 +19,7 @@ func TestGetAmFiles(t *testing.T) {
 
 	gock.New(policypath).Reply(200).File("testdata/app-policies.xml")
 	gock.New(notenforcedpath).Reply(200).File("testdata/not-enforced-urls.txt")
-	files, err := GenerateAmFiles(NamedConfigurationRequest{Application: "testapp", Version: "2.0"})
+	files, err := GenerateAmFiles(&NamedConfigurationRequest{Application: "testapp", Version: "2.0"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(files))

@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/forgerock/frconfig/crest"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/forgerock/frconfig/crest"
+	"github.com/golang/glog"
 )
 
 // POLICY sets the policy name on AM server
@@ -38,7 +39,7 @@ func init() {
 }
 
 func createObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err error) {
-	am, err := GetAmConnection(IssoResource{})
+	am, err := GetAmConnection(&IssoResource{})
 	if err != nil {
 		return err
 	}

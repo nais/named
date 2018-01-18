@@ -6,14 +6,14 @@ import (
 )
 
 //SshConnect returns ssh client and session for specified host
-func SshConnect(user, pass, host, port string) (*ssh.Client, *ssh.Session, error) {
+func SshConnect(resource *OpenAmResource, port string) (*ssh.Client, *ssh.Session, error) {
 
 	sshConfig := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{ssh.Password(pass)},
+		User: resource.Username,
+		Auth: []ssh.AuthMethod{ssh.Password(resource.Password)},
 	}
 
-	serverString := host + ":" + port
+	serverString := resource.Hostname + ":" + port
 
 	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 	client, err := ssh.Dial("tcp", serverString, sshConfig)

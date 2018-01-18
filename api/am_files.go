@@ -2,15 +2,16 @@ package api
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/h2non/filetype"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/h2non/filetype"
+	"golang.org/x/crypto/ssh"
 )
 
 // ValidationErrors contains all validation errors
@@ -25,7 +26,7 @@ type ValidationError struct {
 }
 
 // GenerateAmFiles returns array of validated and downloaded policy files
-func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
+func GenerateAmFiles(request *NamedConfigurationRequest) ([]string, error) {
 	policyFiles, err := downloadPolicies(request)
 	if err != nil {
 		glog.Errorf("Could not download policy files %s", err)
@@ -40,7 +41,7 @@ func GenerateAmFiles(request NamedConfigurationRequest) ([]string, error) {
 	return policyFiles, nil
 }
 
-func downloadPolicies(request NamedConfigurationRequest) ([]string, error) {
+func downloadPolicies(request *NamedConfigurationRequest) ([]string, error) {
 	urls := createPolicyFileUrls(request.Application, request.Version)
 	files, err := fetchPolicyFiles(urls, request.Application)
 	if err != nil {

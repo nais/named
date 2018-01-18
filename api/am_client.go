@@ -2,13 +2,15 @@ package api
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 // AMConnection contains values for basic connection to AM
@@ -37,7 +39,7 @@ type agentPayload struct {
 }
 
 // GetAmConnection returns connection to AM server
-func GetAmConnection(issoResource IssoResource) (am *AMConnection, err error) {
+func GetAmConnection(issoResource *IssoResource) (am *AMConnection, err error) {
 	return openAdminConnection(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
 }
 
@@ -50,19 +52,28 @@ func openAdminConnection(url, username, password string) (am *AMConnection, err 
 // Authenticate connects to AM server and sets tokenID in AMConnection struct
 func (am *AMConnection) Authenticate() error {
 	url := am.getRequestURL("/json/authenticate?authIndexType=service&authIndexValue=adminconsoleservice")
-	headers := map[string]string{
-		"X-Openam-Username": am.User,
-		"X-Openam-Password": am.Password,
-		"Cache-Control":     "no-cache"}
 
-	response, err := executeRequest(url, http.MethodPost, headers, nil)
+	headers := map[string]string{
+		"X-OpenAM-Username": FormatAmHeaderString(am.User),
+		"X-OpenAM-Password": FormatAmHeaderString(am.Password),
+		"Cache-Control":     "no-cache",
+		"Content-Type":      "application/json"}
+
+	request, client, err := executeRequest(url, http.MethodPost, headers, nil)
 	if err != nil {
 		return err
 	}
 
-	body, _ := ioutil.ReadAll(response.Body)
-	var a AuthNResponse
+	response, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("Could not execute request: %s", err)
+	}
 
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+
+	var a AuthNResponse
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
 		return fmt.Errorf("Failed to authenticate %v: %s", response.Status, err)
@@ -71,6 +82,11 @@ func (am *AMConnection) Authenticate() error {
 	am.tokenId = a.TokenID
 
 	return nil
+}
+
+// FormatAmHeaderString used to format user and password for OpenAM (ref RFC2047)
+func FormatAmHeaderString(headerString string) string {
+	return "=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(headerString)) + "?="
 }
 
 func (am *AMConnection) getRequestURL(path string) string {
@@ -96,11 +112,20 @@ func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*h
 func (am *AMConnection) AgentExists(agentName string) bool {
 	agentUrl := am.BaseURL + "/json/agents/" + agentName
 	headers := map[string]string{"nav-isso": am.tokenId}
-	response, err := executeRequest(agentUrl, http.MethodGet, headers, nil)
+
+	request, client, err := executeRequest(agentUrl, http.MethodGet, headers, nil)
 	if err != nil {
 		glog.Errorf("Could not execute request: %s", err)
 		return false
 	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		glog.Errorf("Could not read response: %s", err)
+		return false
+	}
+
+	defer response.Body.Close()
 
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
@@ -110,27 +135,45 @@ func (am *AMConnection) AgentExists(agentName string) bool {
 		glog.Infof(agentName + " already exists")
 		return true
 	}
-	glog.Infof(agentName + " does not exist")
+
 	return false
 }
 
 // CreateAgent creates am agent on isso server
-func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string) (bool, error) {
+func (am *AMConnection) CreateAgent(agentName string, issoResource *IssoResource, namedConfigurationRequest *NamedConfigurationRequest) (bool,
+	error) {
 	agentUrl := am.BaseURL + "/json/agents/?_action=create"
-	headers := map[string]string{"nav-isso": am.tokenId}
+	headers := map[string]string{
+		"nav-isso":     am.tokenId,
+		"Content-Type": "application/json"}
+	redirectionUris := CreateRedirectionUris(issoResource.loadbalancerUrl, namedConfigurationRequest)
 	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
-	response, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
 		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
 	}
 
+	glog.Infof("Redirection Urls are: %s", redirectionUris)
+	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
+	if err != nil {
+		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		glog.Errorf("Could not read response: %s", err)
+		return false, err
+	}
+
+	defer response.Body.Close()
+
 	body, _ := ioutil.ReadAll(response.Body)
 	var a AuthNResponse
 
-	_ = json.Unmarshal(body, &a)
+	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
 		return false, fmt.Errorf("Agent %s could not be created: %s", agentName, err)
 	}
+
 	glog.Infof("Agent %s created", agentName)
 	return true, nil
 }
@@ -139,39 +182,45 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string) 
 func (am *AMConnection) DeleteAgent(agentName string) error {
 	agentUrl := am.BaseURL + "/json/agents/" + agentName
 	headers := map[string]string{"nav-isso": am.tokenId}
-	response, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
 
-	body, _ := ioutil.ReadAll(response.Body)
-	var a AuthNResponse
-
-	_ = json.Unmarshal(body, &a)
-	if response.StatusCode != 200 {
-		return fmt.Errorf("Agent %s could not be deleted: %s", agentName, err)
-	}
-	return nil
-}
-
-func executeRequest(url, method string, headers map[string]string, body io.Reader) (*http.Response,
-	error) {
-	req, err := http.NewRequest(method, url, body)
+	request, client, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
 	if err != nil {
-		glog.Errorf("Could not create request: %s", err)
+		return fmt.Errorf("Could not execute request to delete agent %s: %s", agentName, err)
 	}
 
-	for hKey, hValue := range headers {
-		req.Header.Set(hKey, fmt.Sprintf("%q", hValue))
-	}
-
-	client := &http.Client{}
-
-	response, err := client.Do(req)
+	response, err := client.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("Could not execute request: %s", err)
+		glog.Errorf("Could not read response: %s", err)
+		return err
 	}
 
 	defer response.Body.Close()
 
-	return response, nil
+	body, _ := ioutil.ReadAll(response.Body)
+	var a AuthNResponse
+
+	err = json.Unmarshal(body, &a)
+	if response.StatusCode != 200 {
+		return fmt.Errorf("Agent %s could not be deleted %s: %s", agentName, err)
+	}
+	return nil
+}
+
+func executeRequest(url, method string, headers map[string]string, body io.Reader) (*http.Request, *http.Client,
+	error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		glog.Errorf("Could not create request: %s", err)
+		return nil, nil, err
+	}
+
+	for hKey, hValue := range headers {
+		req.Header.Add(hKey, hValue)
+	}
+
+	client := &http.Client{}
+
+	return req, client, nil
 }
 
 func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentPayload {
@@ -186,4 +235,28 @@ func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentP
 	}
 
 	return agentPayload
+}
+
+// CreateRedirectionUris creates a list of uris for which to configure the openam agent
+func CreateRedirectionUris(loadbalancerUrl string, request *NamedConfigurationRequest) []string {
+	uriList := []string{}
+	counter := 0
+
+	glog.Infof("Context roots to add: %s", request.ContextRoots)
+	for _, contextRoot := range request.ContextRoots {
+		if contextRoot[:1] != "/" {
+			contextRoot = "/" + contextRoot
+		}
+
+		uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, request.IngressUrl, contextRoot))
+		counter++
+
+		if len(loadbalancerUrl) > 0 {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, loadbalancerUrl, contextRoot))
+			counter++
+		}
+	}
+
+	glog.Infof("Context roots to add: %s", uriList)
+	return uriList
 }
