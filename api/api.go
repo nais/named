@@ -254,7 +254,7 @@ func (r NamedConfigurationRequest) Validate() []error {
 		}
 	}
 
-	if r.Zone != "fss" && r.Zone != "sbs" && r.Zone != "SBS" && r.Zone != "FSS" {
+	if r.Zone != zoneFss && r.Zone != zoneSbs && r.Zone != strings.ToUpper(zoneFss) && r.Zone != strings.ToUpper(zoneSbs) {
 		errs = append(errs, errors.New("Zone can only be fss, sbs or iapp"))
 	}
 
