@@ -146,13 +146,14 @@ func (am *AMConnection) CreateAgent(agentName string, issoResource *IssoResource
 	headers := map[string]string{
 		"nav-isso":     am.tokenId,
 		"Content-Type": "application/json"}
+
 	redirectionUris := CreateRedirectionUris(issoResource.loadbalancerUrl, namedConfigurationRequest)
+
 	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
 	if err != nil {
 		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
 	}
 
-	glog.Infof("Redirection Urls are: %s", redirectionUris)
 	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
 		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
@@ -201,7 +202,7 @@ func (am *AMConnection) DeleteAgent(agentName string) error {
 
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Agent %s could not be deleted %s: %s", agentName, err)
+		return fmt.Errorf("Agent %s could not be deleted: %s", agentName, err)
 	}
 	return nil
 }
@@ -242,7 +243,6 @@ func CreateRedirectionUris(loadbalancerUrl string, request *NamedConfigurationRe
 	uriList := []string{}
 	counter := 0
 
-	glog.Infof("Context roots to add: %s", request.ContextRoots)
 	for _, contextRoot := range request.ContextRoots {
 		if contextRoot[:1] != "/" {
 			contextRoot = "/" + contextRoot
