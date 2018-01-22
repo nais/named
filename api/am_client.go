@@ -147,7 +147,7 @@ func (am *AMConnection) CreateAgent(agentName string, issoResource *IssoResource
 		"nav-isso":     am.tokenId,
 		"Content-Type": "application/json"}
 
-	redirectionUris := CreateRedirectionUris(issoResource.loadbalancerUrl, namedConfigurationRequest)
+	redirectionUris := CreateRedirectionUris(issoResource, namedConfigurationRequest)
 
 	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
 	if err != nil {
@@ -239,7 +239,7 @@ func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentP
 }
 
 // CreateRedirectionUris creates a list of uris for which to configure the openam agent
-func CreateRedirectionUris(loadbalancerUrl string, request *NamedConfigurationRequest) []string {
+func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurationRequest) []string {
 	uriList := []string{}
 	counter := 0
 
@@ -248,11 +248,14 @@ func CreateRedirectionUris(loadbalancerUrl string, request *NamedConfigurationRe
 			contextRoot = "/" + contextRoot
 		}
 
-		uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, request.IngressUrl, contextRoot))
-		counter++
+		if len(issoResource.ingressUrl) > 0 {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.ingressUrl, contextRoot))
+			counter++
+		}
 
-		if len(loadbalancerUrl) > 0 {
-			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, loadbalancerUrl, contextRoot))
+		if len(issoResource.loadbalancerUrl) > 0 {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerUrl,
+				contextRoot))
 			counter++
 		}
 	}

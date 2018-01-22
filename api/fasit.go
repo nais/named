@@ -72,6 +72,7 @@ type IssoResource struct {
 	IssoIssuerUrl     string
 	IssoJwksUrl       string
 	loadbalancerUrl   string
+	ingressUrl        string
 	contextRoots      []string
 	nodes             []string
 	createLocalhost   bool
@@ -144,7 +145,13 @@ func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest) (Is
 	loadbalancerResource, _ := getFasitResource(fasit, loadbalancerResourceRequest, fasitEnvironment,
 		application, zone)
 
-	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource, loadbalancerResource)
+	ingressUrl, err := fasit.GetIngressUrl(request)
+	if err != nil {
+		return IssoResource{}, appError{err, "Could not fetch ingress url for cluster", 404}
+	}
+
+	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource,
+		loadbalancerResource, ingressUrl)
 	if appErr != nil {
 		return IssoResource{}, appError{appErr, "Unable to map fasit resources to Isso resource", 500}
 	}
@@ -196,7 +203,7 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 }
 
 func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource,
-	oidcAgentResource FasitResource, loadbalancerResource FasitResource) (resource IssoResource, err error) {
+	oidcAgentResource FasitResource, loadbalancerResource FasitResource, ingressUrl string) (resource IssoResource, err error) {
 	resource.oidcUrl = oidcUrlResource.Properties["url"]
 	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"]+"/oauth2", 443)
 	if err != nil {
@@ -226,6 +233,7 @@ func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUs
 	}
 
 	resource.loadbalancerUrl = loadbalancerResource.Properties["url"]
+	resource.ingressUrl = ingressUrl
 
 	return resource, nil
 }
@@ -306,6 +314,71 @@ func insertPortNumber(urlWithoutPort string, port int) (string, error) {
 		return urlWithoutPort, err
 	}
 	return u.Scheme + "://" + u.Host + ":" + strconv.Itoa(port) + u.Path, nil
+}
+
+func (fasit FasitClient) getFasitEnvironment(environmentName string) (string, error) {
+	requestCounter.With(nil).Inc()
+	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/environments/"+environmentName, nil)
+	if err != nil {
+		return "", fmt.Errorf("Could not create request: %s", err)
+	}
+
+	resp, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return "", appErr
+	}
+
+	type FasitEnvironment struct {
+		EnvironmentClass string `json:"environmentclass"`
+	}
+
+	var fasitEnvironment FasitEnvironment
+	if err := json.Unmarshal(resp, &fasitEnvironment); err != nil {
+		return "", fmt.Errorf("Unable to read environmentclass from response: %s", err)
+	}
+
+	return fasitEnvironment.EnvironmentClass, nil
+}
+
+// GetIngressUrl fetches ingress url from environment class and zone
+func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest) (string, error) {
+	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
+	if err != nil {
+		return "", err
+	}
+
+	domain := GetDomainFromZoneAndEnvironmentClass(environmentClass, request.Zone)
+
+	return fmt.Sprintf("%s.nais.%s", request.Application, domain), nil
+}
+
+// GetDomainFromZoneAndEnvironmentClass returns domain string
+func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string {
+	domain := "devillo.no"
+
+	if zoneFss == zone {
+		switch environmentClass {
+		case "t":
+			domain = "test.local"
+		case "q":
+			domain = "preprod.local"
+		case "p":
+			domain = "adeo.no"
+		}
+	}
+
+	if zoneSbs == zone {
+		switch environmentClass {
+		case "t":
+			domain = "oera-t.local"
+		case "q":
+			domain = "oera-q.local"
+		case "p":
+			domain = "oera.no"
+		}
+	}
+
+	return domain
 }
 
 var httpReqsCounter = prometheus.NewCounterVec(

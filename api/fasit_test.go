@@ -42,6 +42,29 @@ type FakeFasitClient struct {
 	FasitClient
 }
 
+func TestGetIngressUrl(t *testing.T) {
+	application := "testapp"
+	environmentName := "testname"
+	zone := "fss"
+	fasit := FasitClient{"https://fasit.local", "", ""}
+
+	defer gock.Off()
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/environments/testname").
+		Reply(200).BodyString("{\"environmentclass\": \"q\"}")
+
+	request := NamedConfigurationRequest{Application: application, Zone: zone, Environment: environmentName}
+	url, err := fasit.GetIngressUrl(&request)
+	fmt.Printf("Feil: %s", err)
+	assert.Equal(t, "testapp.nais.preprod.local", url)
+}
+
+func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
+	assert.Equal(t, "devillo.no", GetDomainFromZoneAndEnvironmentClass("q", "null"))
+	assert.Equal(t, "test.local", GetDomainFromZoneAndEnvironmentClass("t", "fss"))
+}
+
 func (fasit FakeFasitClient) getScopedResource(resourcesRequest ResourceRequest, environment, application, zone string) (OpenAmResource, AppError) {
 	switch application {
 	case "notfound":

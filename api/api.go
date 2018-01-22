@@ -34,7 +34,6 @@ type NamedConfigurationRequest struct {
 	Zone         string   `json:"zone"`
 	Username     string   `json:"username"`
 	Password     string   `json:"password"`
-	IngressUrl   string   `json:"ingressurl"`
 	ContextRoots []string `json:"contextroots"`
 }
 
