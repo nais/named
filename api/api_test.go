@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 	/*	"bytes"
 		"fmt"
 		"golang.org/x/crypto/ssh"
@@ -45,6 +46,19 @@ func TestInvalidZone(t *testing.T) {
 
 	assert.Equal(t, "Zone has to be fss or sbs, not zone1: No AM configurations available for this zone (400)\n", rr.Body.String())
 
+}
+
+func TestCheckIfInvalidZone(t *testing.T) {
+	api := Api{"https://fasit.local", "testCluster"}
+	request := NamedConfigurationRequest{Zone: "fss"}
+	result, err := api.checkIfInvalidRequest(request)
+	assert.NotNil(t, err)
+	assert.True(t, result)
+
+	api = Api{"https://fasit.local", "preprod-fss"}
+	result, err = api.checkIfInvalidRequest(request)
+	assert.Nil(t, err)
+	assert.False(t, result)
 }
 
 /*

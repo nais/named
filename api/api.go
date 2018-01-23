@@ -50,9 +50,13 @@ type appError struct {
 }
 
 const (
-	sshPort = "22"
-	zoneFss = "fss"
-	zoneSbs = "sbs"
+	sshPort           = "22"
+	zoneFss           = "fss"
+	zoneSbs           = "sbs"
+	clusterPreprodSbs = "preprod-sbs"
+	clusterPreprodFss = "preprod-fss"
+	clusterProdSbs    = "prod-sbs"
+	clusterProdFss    = "prod-fss"
 )
 
 // NewApi initializes fasit instance information
@@ -133,6 +137,11 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
 
 	if zoneSbs == strings.ToLower(namedConfigurationRequest.Zone) {
+		invalid, appErr := api.checkIfInvalidRequest(namedConfigurationRequest)
+		if invalid {
+			return appErr
+		}
+
 		openamResource, error := fasitClient.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"), namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
 			namedConfigurationRequest.Zone)
 		if error != nil {
@@ -178,6 +187,11 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			namedConfigurationRequest.Environment))
 
 	} else if zoneFss == strings.ToLower(namedConfigurationRequest.Zone) {
+		invalid, appErr := api.checkIfInvalidRequest(namedConfigurationRequest)
+		if invalid {
+			return appErr
+		}
+
 		agentName := fmt.Sprintf("nais-%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
 		issoResource, err := fasitClient.GetIssoResource(&namedConfigurationRequest)
 		if err != nil {
@@ -279,4 +293,21 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 		Alias:        alias,
 		ResourceType: resourceType,
 	}
+
+}
+
+func (api Api) checkIfInvalidRequest(request NamedConfigurationRequest) (bool, *appError) {
+	if strings.ToLower(request.Zone) == zoneSbs {
+		if api.ClusterName != clusterPreprodSbs && api.ClusterName != clusterProdSbs {
+			glog.Errorf("User %s trying to configure OpenAM in FSS environment", request.Username)
+			return true, &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+		}
+	}
+	if strings.ToLower(request.Zone) == zoneFss {
+		if api.ClusterName != clusterPreprodFss && api.ClusterName != clusterProdFss {
+			glog.Errorf("User %s trying to configure ISSO in SBS environment", request.Username)
+			return true, &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+		}
+	}
+	return false, nil
 }
