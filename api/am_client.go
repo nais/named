@@ -241,6 +241,7 @@ func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentP
 // CreateRedirectionUris creates a list of uris for which to configure the openam agent
 func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurationRequest) []string {
 	uriList := []string{}
+	defaultServiceDomain := "adeo.no"
 	counter := 0
 
 	for _, contextRoot := range request.ContextRoots {
@@ -256,6 +257,10 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 		if len(issoResource.loadbalancerUrl) > 0 {
 			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerUrl,
 				contextRoot))
+			counter++
+		} else {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://app-%s.%s/%s", counter, request.Environment,
+				defaultServiceDomain, contextRoot))
 			counter++
 		}
 	}
