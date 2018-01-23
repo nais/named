@@ -137,13 +137,13 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			namedConfigurationRequest.Zone)
 		if error != nil {
 			glog.Errorf("Could not get OpenAM resource %s", error)
-			return &appError{error, "Fasit OpenAM resource unavailable", http.StatusNotFound}
+			return error
 		}
 
 		files, err := GenerateAmFiles(&namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not download am policy files: %s", err)
-			return &appError{err, "Policy files not found", http.StatusNotFound}
+			return &appError{err, "Policy files not found", http.StatusBadRequest}
 		}
 
 		sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
@@ -181,14 +181,14 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		agentName := fmt.Sprintf("nais-%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
 		issoResource, err := fasitClient.GetIssoResource(&namedConfigurationRequest)
 		if err != nil {
-			glog.Errorf("Could not get OIDC resource %s", err)
-			return &appError{err, "Fasit OIDC resource unavailable", http.StatusNotFound}
+			glog.Errorf("Could not get OIDC resource: %s", err)
+			return err
 		}
 
 		am, error := GetAmConnection(&issoResource)
 		if error != nil {
 			glog.Errorf("Failed to connect to AM server: %s", error)
-			return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
+			return &appError{error, "AM server connection failed\n", http.StatusServiceUnavailable}
 		}
 
 		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
