@@ -58,9 +58,8 @@ func TestCreateAgent(t *testing.T) {
 		Body(bytes.NewReader(payload)).
 		Reply(200)
 
-	created, err := amc.CreateAgent("testAgent", &IssoResource{}, &NamedConfigurationRequest{})
-	assert.Empty(t, created)
-	assert.Nil(t, err)
+	err := amc.CreateAgent("testAgent", []string{}, &IssoResource{}, &NamedConfigurationRequest{})
+	assert.NoError(t, err)
 }
 
 func TestDeleteAgent(t *testing.T) {
