@@ -59,7 +59,7 @@ func TestCreateAgent(t *testing.T) {
 		Reply(200)
 
 	created, err := amc.CreateAgent("testAgent", &IssoResource{}, &NamedConfigurationRequest{})
-	assert.True(t, created)
+	assert.Empty(t, created)
 	assert.Nil(t, err)
 }
 

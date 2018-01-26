@@ -192,7 +192,8 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			return appErr
 		}
 
-		agentName := fmt.Sprintf("nais-%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
+		agentName := fmt.Sprintf("%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
+
 		issoResource, err := fasitClient.GetIssoResource(&namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not get OIDC resource: %s", err)
@@ -202,8 +203,10 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		am, error := GetAmConnection(&issoResource)
 		if error != nil {
 			glog.Errorf("Failed to connect to AM server: %s", error)
-			return &appError{error, "AM server connection failed\n", http.StatusServiceUnavailable}
+			return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
 		}
+
+		redirectionUris := CreateRedirectionUris(&issoResource, &namedConfigurationRequest)
 
 		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
 		if am.AgentExists(agentName) {
@@ -212,10 +215,15 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		}
 
 		glog.Infof("Creating agent %s", agentName)
-		am.CreateAgent(agentName, &issoResource, &namedConfigurationRequest)
+		agentErr := am.CreateAgent(agentName, redirectionUris, &issoResource, &namedConfigurationRequest)
+		if agentErr != nil {
+			glog.Errorf("Failed to create AM agent %s: %s", agentName, agentErr)
+			return &appError{agentErr, "AM agent creation failed", http.StatusBadRequest}
+		}
 
 		w.Write([]byte("OIDC configured for " + namedConfigurationRequest.Application + " in " +
-			namedConfigurationRequest.Environment))
+			namedConfigurationRequest.Environment + "\nAgentName: " + namedConfigurationRequest.Application + "-" +
+			namedConfigurationRequest.Environment + "\nRedirection URIs:\n\t" + strings.Join(redirectionUris, "\n\t")))
 	} else {
 		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
 			http.StatusBadRequest}

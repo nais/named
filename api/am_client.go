@@ -140,29 +140,27 @@ func (am *AMConnection) AgentExists(agentName string) bool {
 }
 
 // CreateAgent creates am agent on isso server
-func (am *AMConnection) CreateAgent(agentName string, issoResource *IssoResource, namedConfigurationRequest *NamedConfigurationRequest) (bool,
-	error) {
+func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, issoResource *IssoResource,
+	namedConfigurationRequest *NamedConfigurationRequest) error {
 	agentUrl := am.BaseURL + "/json/agents/?_action=create"
 	headers := map[string]string{
 		"nav-isso":     am.tokenId,
 		"Content-Type": "application/json"}
 
-	redirectionUris := CreateRedirectionUris(issoResource, namedConfigurationRequest)
-
 	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
 	if err != nil {
-		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
+		return fmt.Errorf("Could not marshal create request: %s", err)
 	}
 
 	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
-		return false, fmt.Errorf("Could not execute request to create agent: %s", err)
+		return fmt.Errorf("Could not execute request to create agent: %s", err)
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
 		glog.Errorf("Could not read response: %s", err)
-		return false, err
+		return err
 	}
 
 	defer response.Body.Close()
@@ -171,12 +169,12 @@ func (am *AMConnection) CreateAgent(agentName string, issoResource *IssoResource
 	var a AuthNResponse
 
 	err = json.Unmarshal(body, &a)
-	if response.StatusCode != 200 {
-		return false, fmt.Errorf("Agent %s could not be created: %s", agentName, err)
+	if response.StatusCode != 200 && response.StatusCode != 201 {
+		return fmt.Errorf("%d Agent %s could not be created: %s", response.StatusCode, agentName, err)
 	}
 
 	glog.Infof("Agent %s created", agentName)
-	return true, nil
+	return nil
 }
 
 // DeleteAgent deletes am agent on isso server
