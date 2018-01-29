@@ -4,7 +4,7 @@ LATEST  := ${NAME}:latest
 GLIDE   := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named navikt/glide glide
 GO_IMG  := golang:1.8
 GO      := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${GO_IMG} go
-LDFLAGS := -X named/api/version.Version=$(shell /bin/cat ./version)
+LDFLAGS := -X github.com/nais/naisd/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/naisd/api/version.Version=$(shell /bin/cat ./version)
 
 .PHONY: dockerhub-release install test linux bump tag cli cli-dist build docker-build push-dockerhub docker-minikube-build helm-upgrade
 

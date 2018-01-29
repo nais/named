@@ -360,24 +360,25 @@ func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string 
 	domain := "devillo.no"
 
 	if zoneFss == zone {
+		// Using same domain for t and q as they create the same ingress
 		switch environmentClass {
-		case "t":
-			domain = "test.local"
-		case "q":
-			domain = "preprod.local"
 		case "p":
 			domain = "adeo.no"
+		case "t":
+			domain = "preprod.local"
+		case "q":
+			domain = "preprod.local"
 		}
 	}
 
 	if zoneSbs == zone {
 		switch environmentClass {
+		case "p":
+			domain = "oera.no"
 		case "t":
 			domain = "oera-t.local"
 		case "q":
 			domain = "oera-q.local"
-		case "p":
-			domain = "oera.no"
 		}
 	}
 
