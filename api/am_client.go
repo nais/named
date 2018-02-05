@@ -147,7 +147,7 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, 
 		"nav-isso":     am.tokenId,
 		"Content-Type": "application/json"}
 
-	payload, err := json.Marshal(buildAgentPayload(am, agentName, redirectionUris))
+	payload, err := json.Marshal(buildAgentPayload(agentName, issoResource.oidcAgentPassword, redirectionUris))
 	if err != nil {
 		return fmt.Errorf("Could not marshal create request: %s", err)
 	}
@@ -222,10 +222,10 @@ func executeRequest(url, method string, headers map[string]string, body io.Reade
 	return req, client, nil
 }
 
-func buildAgentPayload(am *AMConnection, agentName string, uris []string) agentPayload {
+func buildAgentPayload(agentName, agentPassword string, uris []string) agentPayload {
 	agentPayload := agentPayload{
 		Username:        agentName,
-		Password:        am.Password,
+		Password:        agentPassword,
 		AgentType:       "OAuth2Client",
 		Algorithm:       "RS256",
 		Scope:           "[0]=openid",

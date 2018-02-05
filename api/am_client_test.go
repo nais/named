@@ -47,7 +47,7 @@ func TestAgentExists(t *testing.T) {
 
 func TestCreateAgent(t *testing.T) {
 
-	payload, _ := json.Marshal(buildAgentPayload(&amc, "testAgent", []string{}))
+	payload, _ := json.Marshal(buildAgentPayload("testAgent", "", []string{}))
 
 	defer gock.Off()
 
