@@ -42,6 +42,46 @@ type FakeFasitClient struct {
 	FasitClient
 }
 
+func TestGetFasitApplication(t *testing.T) {
+	fasit := FasitClient{"https://fasit.local", "", ""}
+
+	defer gock.Off()
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/applications/testapp").
+		Reply(200)
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/applications/appdoesontexist").
+		Reply(404)
+
+	assert.Nil(t, fasit.GetFasitApplication("testapp"))
+	assert.Error(t, fasit.GetFasitApplication("appdoesnotexist"))
+}
+
+func TestGetFasitEnvironment(t *testing.T) {
+	fasit := FasitClient{"https://fasit.local", "", ""}
+
+	defer gock.Off()
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/environments/testenv").
+		Reply(200).BodyString("{\"environmentclass\": \"u\"}")
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/environments/envdoesontexist").
+		Reply(404)
+
+	envClass1, err1 := fasit.GetFasitEnvironment("testenv")
+	assert.Equal(t, "u", envClass1)
+	assert.Nil(t, err1)
+
+	envClass2, err2 := fasit.GetFasitEnvironment("envdoesontexist")
+	assert.Empty(t, envClass2)
+	assert.Error(t, err2)
+	assert.Equal(t, "Item not found in Fasit", err2.Message)
+}
+
 func TestGetIngressUrl(t *testing.T) {
 	application := "testapp"
 	environmentName := "testname"
@@ -56,8 +96,8 @@ func TestGetIngressUrl(t *testing.T) {
 
 	request := NamedConfigurationRequest{Application: application, Zone: zone, Environment: environmentName}
 	url, err := fasit.GetIngressUrl(&request)
-	fmt.Printf("Feil: %s", err)
 	assert.Equal(t, "testapp.nais.preprod.local", url)
+	assert.Nil(t, err)
 }
 
 func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {

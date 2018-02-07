@@ -28,13 +28,14 @@ type Api struct {
 
 // NamedConfigurationRequest contains the information of the application to configure in AM
 type NamedConfigurationRequest struct {
-	Application  string   `json:"application"`
-	Version      string   `json:"version"`
-	Environment  string   `json:"environment"`
-	Zone         string   `json:"zone"`
-	Username     string   `json:"username"`
-	Password     string   `json:"password"`
-	ContextRoots []string `json:"contextroots"`
+	Application     string   `json:"application"`
+	Version         string   `json:"version"`
+	Environment     string   `json:"environment"`
+	Zone            string   `json:"zone"`
+	Username        string   `json:"username"`
+	Password        string   `json:"password"`
+	ContextRoots    []string `json:"contextroots"`
+	RedirectionUris []string
 }
 
 // AppError contains error and response code
@@ -101,7 +102,7 @@ func init() {
 }
 
 // MakeHandler creates REST endpoint handlers
-func (api Api) MakeHandler() http.Handler {
+func (api *Api) MakeHandler() http.Handler {
 	mux := goji.NewMux()
 	mux.Handle(pat.Get("/isalive"), appHandler(api.isAlive))
 	mux.Handle(pat.Get("/metrics"), promhttp.Handler())
@@ -110,13 +111,13 @@ func (api Api) MakeHandler() http.Handler {
 	return mux
 }
 
-func (api Api) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
+func (api *Api) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "isalive"}).Inc()
 	fmt.Fprint(w, "")
 	return nil
 }
 
-func (api Api) version(w http.ResponseWriter, _ *http.Request) *appError {
+func (api *Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 	response := map[string]string{"version": ver.Version, "revision": ver.Revision}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -126,104 +127,44 @@ func (api Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 	return nil
 }
 
-func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
+func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "configure"}).Inc()
-	namedConfigurationRequest, err := unmarshalConfigurationRequest(r.Body)
 
+	namedConfigurationRequest, err := unmarshalConfigurationRequest(r.Body)
 	if err != nil {
 		return &appError{err, "Unable to unmarshal configuration namedConfigurationRequest", http.StatusBadRequest}
 	}
 
 	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
+	fasitErr := validateFasitRequirements(&fasitClient, &namedConfigurationRequest)
+	if fasitErr != nil {
+		return fasitErr
+	}
+
+	zoneErr := api.VerifyClusterAndZone(namedConfigurationRequest)
+	if zoneErr != nil {
+		return zoneErr
+	}
 
 	if zoneSbs == strings.ToLower(namedConfigurationRequest.Zone) {
-		invalid, appErr := api.checkIfInvalidRequest(namedConfigurationRequest)
-		if invalid {
-			return appErr
-		}
-
-		openamResource, error := fasitClient.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"), namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
-			namedConfigurationRequest.Zone)
-		if error != nil {
-			glog.Errorf("Could not get OpenAM resource: %s", error)
-			return error
-		}
-
-		files, err := GenerateAmFiles(&namedConfigurationRequest)
-		if err != nil {
-			glog.Errorf("Could not download am policy files: %s", err)
-			return &appError{err, "Policy files not found", http.StatusNotFound}
-		}
-
-		sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
-		if err != nil {
-			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
-			return &appError{err, "SSH session failed", http.StatusServiceUnavailable}
-		}
-
-		defer sshSession.Close()
-		defer sshClient.Close()
-
-		err = UpdatePolicyFiles(files, namedConfigurationRequest.Environment)
-		if err != nil {
-			glog.Errorf("Could not update policy files with correct site name %s", err)
-			return &appError{err, "AM policy files could not be updated", http.StatusBadRequest}
-		}
-
-		err = CopyFilesToAmServer(sshClient, files, namedConfigurationRequest.Application)
-		if err != nil {
-			glog.Errorf("Could not to copy files to AM server; %s", err)
-			return &appError{err, "AM policy files transfer failed", http.StatusBadRequest}
-		}
-
-		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
-		//JobQueue <- Job{Api: api}
-		if err := api.runAmPolicyScript(namedConfigurationRequest, sshSession); err != nil {
-			glog.Errorf("Failed to run script; %s", err)
-			return &appError{err, "AM policy script failed", http.StatusBadRequest}
+		appError := configureSBSOpenam(&fasitClient, &namedConfigurationRequest)
+		if appError != nil {
+			return appError
 		}
 
 		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))
 
 	} else if zoneFss == strings.ToLower(namedConfigurationRequest.Zone) {
-		invalid, appErr := api.checkIfInvalidRequest(namedConfigurationRequest)
-		if invalid {
-			return appErr
-		}
-
-		agentName := fmt.Sprintf("%s-%s", namedConfigurationRequest.Application, namedConfigurationRequest.Environment)
-
-		issoResource, err := fasitClient.GetIssoResource(&namedConfigurationRequest)
-		if err != nil {
-			glog.Errorf("Could not get OIDC resource: %s", err)
-			return err
-		}
-
-		am, error := GetAmConnection(&issoResource)
-		if error != nil {
-			glog.Errorf("Failed to connect to AM server: %s", error)
-			return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
-		}
-
-		redirectionUris := CreateRedirectionUris(&issoResource, &namedConfigurationRequest)
-
-		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
-		if am.AgentExists(agentName) {
-			glog.Infof("Deleting agent %s before re-creating it", agentName)
-			am.DeleteAgent(agentName)
-		}
-
-		glog.Infof("Creating agent %s", agentName)
-		agentErr := am.CreateAgent(agentName, redirectionUris, &issoResource, &namedConfigurationRequest)
-		if agentErr != nil {
-			glog.Errorf("Failed to create AM agent %s: %s", agentName, agentErr)
-			return &appError{agentErr, "AM agent creation failed", http.StatusBadRequest}
+		appError := configureFSSOpenam(&fasitClient, &namedConfigurationRequest)
+		if appError != nil {
+			return appError
 		}
 
 		w.Write([]byte("OIDC configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment + "\nAgentName: " + namedConfigurationRequest.Application + "-" +
-			namedConfigurationRequest.Environment + "\nRedirection URIs:\n\t" + strings.Join(redirectionUris, "\n\t")))
+			namedConfigurationRequest.Environment + "\nRedirection URIs:\n\t" + strings.Join(namedConfigurationRequest.RedirectionUris,
+			"\n\t")))
 	} else {
 		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
 			http.StatusBadRequest}
@@ -232,7 +173,86 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
-func (api Api) runAmPolicyScript(request NamedConfigurationRequest, sshSession *ssh.Session) error {
+func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
+	openamResource, error := fasit.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"),
+		request.Environment, request.Application,
+		request.Zone)
+	if error != nil {
+		glog.Errorf("Could not get OpenAM resource: %s", error)
+		return error
+	}
+
+	files, err := GenerateAmFiles(request)
+	if err != nil {
+		glog.Errorf("Could not download am policy files: %s", err)
+		return &appError{err, "Policy files not found", http.StatusNotFound}
+	}
+
+	sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
+	if err != nil {
+		glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
+		return &appError{err, "SSH session failed", http.StatusServiceUnavailable}
+	}
+
+	defer sshSession.Close()
+	defer sshClient.Close()
+
+	err = UpdatePolicyFiles(files, request.Environment)
+	if err != nil {
+		glog.Errorf("Could not update policy files with correct site name %s", err)
+		return &appError{err, "AM policy files could not be updated", http.StatusBadRequest}
+	}
+
+	err = CopyFilesToAmServer(sshClient, files, request.Application)
+	if err != nil {
+		glog.Errorf("Could not to copy files to AM server; %s", err)
+		return &appError{err, "AM policy files transfer failed", http.StatusBadRequest}
+	}
+
+	configurations.With(prometheus.Labels{"nameD": request.Application}).Inc()
+	//JobQueue <- Job{Api: api}
+	if err := runAmPolicyScript(request, sshSession); err != nil {
+		glog.Errorf("Failed to run script; %s", err)
+		return &appError{err, "AM policy script failed", http.StatusBadRequest}
+	}
+
+	return nil
+}
+
+func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
+	agentName := fmt.Sprintf("%s-%s", request.Application, request.Environment)
+
+	issoResource, err := fasit.GetIssoResource(request)
+	if err != nil {
+		glog.Errorf("Could not get OIDC resource: %s", err)
+		return err
+	}
+
+	am, error := GetAmConnection(&issoResource)
+	if error != nil {
+		glog.Errorf("Failed to connect to AM server: %s", error)
+		return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
+	}
+
+	request.RedirectionUris = CreateRedirectionUris(&issoResource, request)
+
+	configurations.With(prometheus.Labels{"nameD": request.Application}).Inc()
+	if am.AgentExists(agentName) {
+		glog.Infof("Deleting agent %s before re-creating it", agentName)
+		am.DeleteAgent(agentName)
+	}
+
+	glog.Infof("Creating agent %s", agentName)
+	agentErr := am.CreateAgent(agentName, request.RedirectionUris, &issoResource, request)
+	if agentErr != nil {
+		glog.Errorf("Failed to create AM agent %s: %s", agentName, agentErr)
+		return &appError{agentErr, "AM agent creation failed", http.StatusBadRequest}
+	}
+
+	return nil
+}
+
+func runAmPolicyScript(request *NamedConfigurationRequest, sshSession *ssh.Session) error {
 	cmd := fmt.Sprintf("sudo python /opt/openam/scripts/openam_policy.py %s %s", request.Application, request.Application)
 
 	modes := ssh.TerminalModes{
@@ -304,18 +324,36 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 
 }
 
-func (api Api) checkIfInvalidRequest(request NamedConfigurationRequest) (bool, *appError) {
+// VerifyClsuterAndZone makes sure were not trying to configure cluster in wrong zone
+func (api *Api) VerifyClusterAndZone(request NamedConfigurationRequest) *appError {
 	if strings.ToLower(request.Zone) == zoneSbs {
 		if api.ClusterName != clusterPreprodSbs && api.ClusterName != clusterProdSbs {
 			glog.Errorf("User %s trying to configure OpenAM in FSS environment", request.Username)
-			return true, &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+			return &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
 		}
 	}
 	if strings.ToLower(request.Zone) == zoneFss {
 		if api.ClusterName != clusterPreprodFss && api.ClusterName != clusterProdFss {
 			glog.Errorf("User %s trying to configure ISSO in SBS environment", request.Username)
-			return true, &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+			return &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
 		}
 	}
-	return false, nil
+	return nil
+}
+
+func validateFasitRequirements(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
+	application := request.Application
+	fasitEnvironment := request.Environment
+
+	if _, err := fasit.GetFasitEnvironment(fasitEnvironment); err != nil {
+		glog.Errorf("Environment '%s' does not exist in Fasit", fasitEnvironment)
+		return err
+	}
+
+	if err := fasit.GetFasitApplication(request.Application); err != nil {
+		glog.Errorf("Application '%s' does not exist in Fasit", application)
+		return err
+	}
+
+	return nil
 }

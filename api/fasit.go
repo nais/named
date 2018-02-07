@@ -103,13 +103,13 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *appError) {
 	httpReqsCounter.WithLabelValues(strconv.Itoa(resp.StatusCode), "GET").Inc()
 	if resp.StatusCode == 404 {
 		errorCounter.WithLabelValues("error_fasit").Inc()
-		return []byte{}, &appError{nil, "Item not found in Fasit", http.StatusNotFound}
+		return []byte{}, &appError{nil, "Item not found in Fasit: " + r.URL.Scheme + "://" + r.URL.Host + r.URL.RequestURI(), http.StatusNotFound}
 	}
 
 	httpReqsCounter.WithLabelValues(strconv.Itoa(resp.StatusCode), "GET").Inc()
 	if resp.StatusCode > 299 {
 		errorCounter.WithLabelValues("error_fasit").Inc()
-		return []byte{}, &appError{nil, "Error from Fasit calling " + r.URL.Scheme + "://" + r.URL.Host + r.URL.RequestURI(), resp.StatusCode}
+		return []byte{}, &appError{nil, "Error calling Fasit url " + r.URL.Scheme + "://" + r.URL.Host + r.URL.RequestURI(), resp.StatusCode}
 	}
 
 	return body, nil
@@ -252,6 +252,45 @@ func (fasit FasitClient) mapToOpenAmResource(fasitResource FasitResource) (resou
 		resource.Password = secret["password"]
 	}
 	return resource, nil
+}
+
+func (fasit FasitClient) GetFasitApplication(application string) *appError {
+	requestCounter.With(nil).Inc()
+	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/applications/"+application, nil)
+	if err != nil {
+		return &appError{err, "Could not create request", http.StatusInternalServerError}
+	}
+
+	_, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return &appError{fmt.Errorf("could not find application %s in Fasit", application), "Application does not " +
+			"exist", http.StatusNotFound}
+	}
+
+	return nil
+}
+
+func (fasit FasitClient) GetFasitEnvironment(environmentName string) (string, *appError) {
+	requestCounter.With(nil).Inc()
+	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/environments/"+environmentName, nil)
+	if err != nil {
+		return "", &appError{err, "Could not create request", http.StatusInternalServerError}
+	}
+
+	resp, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return "", appErr
+	}
+
+	type FasitEnvironment struct {
+		EnvironmentClass string `json:"environmentclass"`
+	}
+	var fasitEnvironment FasitEnvironment
+	if err := json.Unmarshal(resp, &fasitEnvironment); err != nil {
+		return "", &appError{err, "Could not read environment from response", http.StatusInternalServerError}
+	}
+
+	return fasitEnvironment.EnvironmentClass, nil
 }
 
 func resolveSecret(secrets map[string]map[string]string, username string, password string) (map[string]string, *appError) {

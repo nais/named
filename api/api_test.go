@@ -30,7 +30,7 @@ func TestAnIncorrectPayloadGivesError(t *testing.T) {
 	assert.Equal(t, 400, rr.Code)
 }
 
-func TestInvalidZone(t *testing.T) {
+func TestInvalidFasit(t *testing.T) {
 	api := Api{"https://fasit.local", "testCluster"}
 	json, _ := json.Marshal(CreateConfigurationRequest("appname", "123", "env", "zone1", "test", "test"))
 
@@ -43,22 +43,18 @@ func TestInvalidZone(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.Handler(appHandler(api.configure))
 	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, "Zone has to be fss or sbs, not zone1: No AM configurations available for this zone (400)\n", rr.Body.String())
-
+	assert.Contains(t, rr.Body.String(), "Error contacting fasit")
 }
 
 func TestCheckIfInvalidZone(t *testing.T) {
 	api := Api{"https://fasit.local", "testCluster"}
 	request := NamedConfigurationRequest{Zone: "fss"}
-	result, err := api.checkIfInvalidRequest(request)
+	err := api.VerifyClusterAndZone(request)
 	assert.NotNil(t, err)
-	assert.True(t, result)
 
 	api = Api{"https://fasit.local", "preprod-fss"}
-	result, err = api.checkIfInvalidRequest(request)
+	err = api.VerifyClusterAndZone(request)
 	assert.Nil(t, err)
-	assert.False(t, result)
 }
 
 /*
