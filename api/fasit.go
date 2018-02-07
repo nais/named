@@ -254,6 +254,7 @@ func (fasit FasitClient) mapToOpenAmResource(fasitResource FasitResource) (resou
 	return resource, nil
 }
 
+// GetFasitApplication returns nil if application exists in Fasit
 func (fasit FasitClient) GetFasitApplication(application string) *appError {
 	requestCounter.With(nil).Inc()
 	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/applications/"+application, nil)
@@ -270,6 +271,7 @@ func (fasit FasitClient) GetFasitApplication(application string) *appError {
 	return nil
 }
 
+// GetFasitEnvironment converts Fasit environment name to environment class
 func (fasit FasitClient) GetFasitEnvironment(environmentName string) (string, *appError) {
 	requestCounter.With(nil).Inc()
 	req, err := http.NewRequest("GET", fasit.FasitUrl+"/api/v2/environments/"+environmentName, nil)

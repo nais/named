@@ -324,7 +324,7 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 
 }
 
-// VerifyClsuterAndZone makes sure were not trying to configure cluster in wrong zone
+// VerifyClusterAndZone makes sure were not trying to configure cluster in wrong zone
 func VerifyClusterAndZone(clusterName string, request NamedConfigurationRequest) *appError {
 	if strings.ToLower(request.Zone) == zoneSbs {
 		if clusterName != clusterPreprodSbs && clusterName != clusterProdSbs {
