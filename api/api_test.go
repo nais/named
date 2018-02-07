@@ -47,13 +47,11 @@ func TestInvalidFasit(t *testing.T) {
 }
 
 func TestCheckIfInvalidZone(t *testing.T) {
-	api := Api{"https://fasit.local", "testCluster"}
 	request := NamedConfigurationRequest{Zone: "fss"}
-	err := api.VerifyClusterAndZone(request)
+	err := VerifyClusterAndZone("cluster", request)
 	assert.NotNil(t, err)
 
-	api = Api{"https://fasit.local", "preprod-fss"}
-	err = api.VerifyClusterAndZone(request)
+	err = VerifyClusterAndZone("preprod-fss", request)
 	assert.Nil(t, err)
 }
 

@@ -79,7 +79,7 @@ func TestGetFasitEnvironment(t *testing.T) {
 	envClass2, err2 := fasit.GetFasitEnvironment("envdoesontexist")
 	assert.Empty(t, envClass2)
 	assert.Error(t, err2)
-	assert.Equal(t, "Item not found in Fasit", err2.Message)
+	assert.Equal(t, "Item not found in Fasit: https://fasit.local/api/v2/environments/envdoesontexist", err2.Message)
 }
 
 func TestGetIngressUrl(t *testing.T) {

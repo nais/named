@@ -141,7 +141,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		return fasitErr
 	}
 
-	zoneErr := api.VerifyClusterAndZone(namedConfigurationRequest)
+	zoneErr := VerifyClusterAndZone(api.ClusterName, namedConfigurationRequest)
 	if zoneErr != nil {
 		return zoneErr
 	}
@@ -325,17 +325,17 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 }
 
 // VerifyClsuterAndZone makes sure were not trying to configure cluster in wrong zone
-func (api *Api) VerifyClusterAndZone(request NamedConfigurationRequest) *appError {
+func VerifyClusterAndZone(clusterName string, request NamedConfigurationRequest) *appError {
 	if strings.ToLower(request.Zone) == zoneSbs {
-		if api.ClusterName != clusterPreprodSbs && api.ClusterName != clusterProdSbs {
+		if clusterName != clusterPreprodSbs && clusterName != clusterProdSbs {
 			glog.Errorf("User %s trying to configure OpenAM in FSS environment", request.Username)
-			return &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+			return &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", clusterName), "Configuration failed", http.StatusBadRequest}
 		}
 	}
 	if strings.ToLower(request.Zone) == zoneFss {
-		if api.ClusterName != clusterPreprodFss && api.ClusterName != clusterProdFss {
+		if clusterName != clusterPreprodFss && clusterName != clusterProdFss {
 			glog.Errorf("User %s trying to configure ISSO in SBS environment", request.Username)
-			return &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", api.ClusterName), "Configuration failed", http.StatusBadRequest}
+			return &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", clusterName), "Configuration failed", http.StatusBadRequest}
 		}
 	}
 	return nil
