@@ -29,7 +29,6 @@ type ValidationError struct {
 func GenerateAmFiles(request *NamedConfigurationRequest) ([]string, error) {
 	policyFiles, err := downloadPolicies(request)
 	if err != nil {
-		glog.Errorf("Could not download policy files %s", err)
 		return []string{}, err
 	}
 
@@ -45,7 +44,7 @@ func downloadPolicies(request *NamedConfigurationRequest) ([]string, error) {
 	urls := createPolicyFileUrls(request.Application, request.Version)
 	files, err := fetchPolicyFiles(urls, request.Application)
 	if err != nil {
-		glog.Errorf("Could not fetch policy files: %s", err)
+		return []string{}, err
 	}
 
 	return files, nil

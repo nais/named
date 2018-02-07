@@ -145,20 +145,20 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		openamResource, error := fasitClient.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"), namedConfigurationRequest.Environment, namedConfigurationRequest.Application,
 			namedConfigurationRequest.Zone)
 		if error != nil {
-			glog.Errorf("Could not get OpenAM resource %s", error)
+			glog.Errorf("Could not get OpenAM resource: %s", error)
 			return error
 		}
 
 		files, err := GenerateAmFiles(&namedConfigurationRequest)
 		if err != nil {
 			glog.Errorf("Could not download am policy files: %s", err)
-			return &appError{err, "Policy files not found", http.StatusBadRequest}
+			return &appError{err, "Policy files not found", http.StatusNotFound}
 		}
 
 		sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
 		if err != nil {
 			glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
-			return &appError{err, "SSH session failed", http.StatusBadRequest}
+			return &appError{err, "SSH session failed", http.StatusServiceUnavailable}
 		}
 
 		defer sshSession.Close()
@@ -172,14 +172,14 @@ func (api Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 
 		err = CopyFilesToAmServer(sshClient, files, namedConfigurationRequest.Application)
 		if err != nil {
-			glog.Errorf("Could not to copy files to AM server %s", err)
+			glog.Errorf("Could not to copy files to AM server; %s", err)
 			return &appError{err, "AM policy files transfer failed", http.StatusBadRequest}
 		}
 
 		configurations.With(prometheus.Labels{"nameD": namedConfigurationRequest.Application}).Inc()
 		//JobQueue <- Job{Api: api}
 		if err := api.runAmPolicyScript(namedConfigurationRequest, sshSession); err != nil {
-			glog.Errorf("Failed to run script: %s", err)
+			glog.Errorf("Failed to run script; %s", err)
 			return &appError{err, "AM policy script failed", http.StatusBadRequest}
 		}
 

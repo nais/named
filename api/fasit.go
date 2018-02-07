@@ -82,7 +82,7 @@ const (
 	openidconnectagentalias = "OpenIdConnectAgent"
 )
 
-func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
+func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *appError) {
 	requestCounter.With(nil).Inc()
 
 	client := &http.Client{}
@@ -90,26 +90,26 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, AppError) {
 
 	if err != nil {
 		errorCounter.WithLabelValues("contact_fasit").Inc()
-		return []byte{}, appError{err, "Error contacting fasit", http.StatusInternalServerError}
+		return []byte{}, &appError{err, "Error contacting fasit", http.StatusInternalServerError}
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		errorCounter.WithLabelValues("read_body").Inc()
-		return []byte{}, appError{err, "Could not read body", http.StatusInternalServerError}
+		return []byte{}, &appError{err, "Could not read body", http.StatusInternalServerError}
 	}
 
 	httpReqsCounter.WithLabelValues(strconv.Itoa(resp.StatusCode), "GET").Inc()
 	if resp.StatusCode == 404 {
 		errorCounter.WithLabelValues("error_fasit").Inc()
-		return []byte{}, appError{nil, "Item not found in Fasit", http.StatusNotFound}
+		return []byte{}, &appError{nil, "Item not found in Fasit", http.StatusNotFound}
 	}
 
 	httpReqsCounter.WithLabelValues(strconv.Itoa(resp.StatusCode), "GET").Inc()
 	if resp.StatusCode > 299 {
 		errorCounter.WithLabelValues("error_fasit").Inc()
-		return []byte{}, appError{nil, "Error contacting Fasit", resp.StatusCode}
+		return []byte{}, &appError{nil, "Error from Fasit calling " + r.URL.Scheme + "://" + r.URL.Host + r.URL.RequestURI(), resp.StatusCode}
 	}
 
 	return body, nil
@@ -187,7 +187,7 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 
 	body, appErr := fasit.doRequest(req)
 	if appErr != nil {
-		return FasitResource{}, &appError{appErr, "Could not execute fasit request", appErr.Code()}
+		return FasitResource{}, appErr
 	}
 
 	var fasitResource FasitResource
