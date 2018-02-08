@@ -140,12 +140,12 @@ func TestValidateDeploymentRequest(t *testing.T) {
 		err := invalid.Validate("fss")
 
 		assert.NotNil(t, err)
-		assert.Contains(t, err, errors.New("Application is required and is empty"))
-		assert.Contains(t, err, errors.New("Version is required and is empty"))
-		assert.Contains(t, err, errors.New("Environment is required and is empty"))
-		assert.Contains(t, err, errors.New("Username is required and is empty"))
-		assert.Contains(t, err, errors.New("Password is required and is empty"))
-		assert.Contains(t, err, errors.New("ContextRoots are required and is empty"))
+		assert.Contains(t, err, errors.New("Application is required but empty"))
+		assert.Contains(t, err, errors.New("Version is required but empty"))
+		assert.Contains(t, err, errors.New("Environment is required but empty"))
+		assert.Contains(t, err, errors.New("Username is required but empty"))
+		assert.Contains(t, err, errors.New("Password is required but empty"))
+		assert.Contains(t, err, errors.New("ContextRoots are required but empty"))
 	})
 }
 
