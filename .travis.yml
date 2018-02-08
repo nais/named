@@ -3,7 +3,7 @@ services:
 - docker
 before_script:
 - docker pull navikt/glide
-- docker pull golang:1.8
+- docker pull golang:1.9.4
 - docker pull navikt/helm
 - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 - git clone https://github.com/nais/charts
