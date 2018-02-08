@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nais/named/api"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/nais/named/api"
+	"github.com/spf13/cobra"
 )
 
 const configureEndpoint = "/configure"
@@ -74,7 +75,6 @@ var configurationCmd = &cobra.Command{
 			"app":         &configurationRequest.Application,
 			"version":     &configurationRequest.Version,
 			"environment": &configurationRequest.Environment,
-			"zone":        &configurationRequest.Zone,
 			"username":    &configurationRequest.Username,
 			"password":    &configurationRequest.Password,
 			"cluster":     &cluster,
@@ -89,7 +89,7 @@ var configurationCmd = &cobra.Command{
 			}
 		}
 
-		if err := configurationRequest.Validate(); err != nil {
+		if err := configurationRequest.Validate(cluster); err != nil {
 			fmt.Printf("Configuration request is not valid: %v\n", err)
 			os.Exit(1)
 		}
