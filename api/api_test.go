@@ -32,7 +32,7 @@ func TestAnIncorrectPayloadGivesError(t *testing.T) {
 
 func TestInvalidFasit(t *testing.T) {
 	api := Api{"https://fasit.local", "testCluster"}
-	json, _ := json.Marshal(CreateConfigurationRequest("appname", "123", "env", "zone1", "test", "test"))
+	json, _ := json.Marshal(CreateConfigurationRequest("appname", "123", "env", "zone1", "test", "test", []string{"/test"}))
 
 	body := strings.NewReader(string(json))
 	req, err := http.NewRequest("POST", "/configure", body)
@@ -47,12 +47,11 @@ func TestInvalidFasit(t *testing.T) {
 }
 
 func TestCheckIfInvalidZone(t *testing.T) {
-	request := NamedConfigurationRequest{Zone: "fss"}
-	err := VerifyClusterAndZone("cluster", request)
-	assert.NotNil(t, err)
+	zone1 := GetZone("cluster")
+	assert.Empty(t, zone1)
 
-	err = VerifyClusterAndZone("preprod-fss", request)
-	assert.Nil(t, err)
+	zone2 := GetZone("preprod-fss")
+	assert.Equal(t, "fss", zone2)
 }
 
 /*
@@ -136,28 +135,27 @@ func TestValidConfigurationRequestInSBS(t *testing.T) {
 
 func TestValidateDeploymentRequest(t *testing.T) {
 	t.Run("Empty fields should be marked invalid", func(t *testing.T) {
-		invalid := CreateConfigurationRequest("", "", "", "", "", "")
+		invalid := CreateConfigurationRequest("", "", "", "", "", "", []string{})
 
-		err := invalid.Validate()
+		err := invalid.Validate("fss")
 
 		assert.NotNil(t, err)
 		assert.Contains(t, err, errors.New("Application is required and is empty"))
 		assert.Contains(t, err, errors.New("Version is required and is empty"))
 		assert.Contains(t, err, errors.New("Environment is required and is empty"))
-		assert.Contains(t, err, errors.New("Zone is required and is empty"))
-		assert.Contains(t, err, errors.New("Zone can only be fss, sbs or iapp"))
 		assert.Contains(t, err, errors.New("Username is required and is empty"))
 		assert.Contains(t, err, errors.New("Password is required and is empty"))
+		assert.Contains(t, err, errors.New("ContextRoots are required and is empty"))
 	})
 }
 
-func CreateConfigurationRequest(appName, version, env, zone, username, password string) NamedConfigurationRequest {
+func CreateConfigurationRequest(appName, version, env, zone, username, password string, urls []string) NamedConfigurationRequest {
 	return NamedConfigurationRequest{
-		Application: appName,
-		Version:     version,
-		Environment: env,
-		Zone:        zone,
-		Username:    username,
-		Password:    password,
+		Application:  appName,
+		Version:      version,
+		Environment:  env,
+		Username:     username,
+		Password:     password,
+		ContextRoots: urls,
 	}
 }

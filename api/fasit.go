@@ -117,10 +117,9 @@ func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *appError) {
 }
 
 // GetIssoResource fetches necessary ISSO and OIDC resources from fasit
-func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest) (IssoResource, *appError) {
+func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest, zone string) (IssoResource, *appError) {
 	fasitEnvironment := request.Environment
 	application := request.Application
-	zone := request.Zone
 
 	oidcUrlResourceRequest := ResourceRequest{openidconnectalias, "BaseUrl"}
 	oidcUrlResource, fasitErr := getFasitResource(fasit, oidcUrlResourceRequest, fasitEnvironment, application, zone)
@@ -144,7 +143,7 @@ func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest) (Is
 	loadbalancerResource, _ := getFasitResource(fasit, loadbalancerResourceRequest, fasitEnvironment,
 		application, zone)
 
-	ingressUrl, err := fasit.GetIngressUrl(request)
+	ingressUrl, err := fasit.GetIngressUrl(request, zone)
 	if err != nil {
 		return IssoResource{}, &appError{err, "Could not fetch ingress url for application", 404}
 	}
@@ -385,13 +384,13 @@ func (fasit FasitClient) getFasitEnvironment(environmentName string) (string, er
 }
 
 // GetIngressUrl fetches ingress url from environment class and zone
-func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest) (string, error) {
+func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest, zone string) (string, error) {
 	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
 	if err != nil {
 		return "", err
 	}
 
-	domain := GetDomainFromZoneAndEnvironmentClass(environmentClass, request.Zone)
+	domain := GetDomainFromZoneAndEnvironmentClass(environmentClass, zone)
 
 	return fmt.Sprintf("%s.nais.%s", request.Application, domain), nil
 }

@@ -31,7 +31,6 @@ type NamedConfigurationRequest struct {
 	Application     string   `json:"application"`
 	Version         string   `json:"version"`
 	Environment     string   `json:"environment"`
-	Zone            string   `json:"zone"`
 	Username        string   `json:"username"`
 	Password        string   `json:"password"`
 	ContextRoots    []string `json:"contextroots"`
@@ -141,13 +140,20 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		return fasitErr
 	}
 
-	zoneErr := VerifyClusterAndZone(api.ClusterName, namedConfigurationRequest)
-	if zoneErr != nil {
-		return zoneErr
+	zone := GetZone(api.ClusterName)
+
+	if errs := namedConfigurationRequest.Validate(zone); errs != nil {
+		var errorString = "Configuration request is invalid: "
+		for _, err := range errs {
+			errorString = errorString + err.Error() + ","
+		}
+		return &appError{nil, errorString, http.StatusBadRequest}
 	}
 
-	if zoneSbs == strings.ToLower(namedConfigurationRequest.Zone) {
-		appError := configureSBSOpenam(&fasitClient, &namedConfigurationRequest)
+	if zoneSbs == zone {
+		w.Write([]byte("Configuring AM policies in SBS\n"))
+
+		appError := configureSBSOpenam(&fasitClient, &namedConfigurationRequest, zone)
 		if appError != nil {
 			return appError
 		}
@@ -155,8 +161,10 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))
 
-	} else if zoneFss == strings.ToLower(namedConfigurationRequest.Zone) {
-		appError := configureFSSOpenam(&fasitClient, &namedConfigurationRequest)
+	} else if zoneFss == zone {
+		w.Write([]byte("Configuring ISSO agent in FSS\n"))
+
+		appError := configureFSSOpenam(&fasitClient, &namedConfigurationRequest, zone)
 		if appError != nil {
 			return appError
 		}
@@ -166,17 +174,15 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			namedConfigurationRequest.Environment + "\nRedirection URIs:\n\t" + strings.Join(namedConfigurationRequest.RedirectionUris,
 			"\n\t")))
 	} else {
-		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + namedConfigurationRequest.Zone,
-			http.StatusBadRequest}
+		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + zone, http.StatusBadRequest}
 	}
 
 	return nil
 }
 
-func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
+func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, zone string) *appError {
 	openamResource, error := fasit.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"),
-		request.Environment, request.Application,
-		request.Zone)
+		request.Environment, request.Application, zone)
 	if error != nil {
 		glog.Errorf("Could not get OpenAM resource: %s", error)
 		return error
@@ -219,10 +225,10 @@ func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest) 
 	return nil
 }
 
-func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
+func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, zone string) *appError {
 	agentName := fmt.Sprintf("%s-%s", request.Application, request.Environment)
 
-	issoResource, err := fasit.GetIssoResource(request)
+	issoResource, err := fasit.GetIssoResource(request, zone)
 	if err != nil {
 		glog.Errorf("Could not get OIDC resource: %s", err)
 		return err
@@ -278,12 +284,11 @@ func runAmPolicyScript(request *NamedConfigurationRequest, sshSession *ssh.Sessi
 }
 
 // Validate performs validation of NamedConfigurationRequest
-func (r NamedConfigurationRequest) Validate() []error {
+func (r NamedConfigurationRequest) Validate(zone string) []error {
 	required := map[string]*string{
 		"Application": &r.Application,
 		"Version":     &r.Version,
 		"Environment": &r.Environment,
-		"Zone":        &r.Zone,
 		"Username":    &r.Username,
 		"Password":    &r.Password,
 	}
@@ -291,12 +296,14 @@ func (r NamedConfigurationRequest) Validate() []error {
 	var errs []error
 	for key, pointer := range required {
 		if len(*pointer) == 0 {
-			errs = append(errs, fmt.Errorf("%s is required and is empty", key))
+			errs = append(errs, fmt.Errorf("%s is required but empty", key))
 		}
 	}
 
-	if r.Zone != zoneFss && r.Zone != zoneSbs && r.Zone != strings.ToUpper(zoneFss) && r.Zone != strings.ToUpper(zoneSbs) {
-		errs = append(errs, errors.New("Zone can only be fss, sbs or iapp"))
+	if zone == zoneFss {
+		if len(r.ContextRoots) == 0 {
+			errs = append(errs, fmt.Errorf("ContextRoots are required but empty"))
+		}
 	}
 
 	return errs
@@ -324,21 +331,20 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 
 }
 
-// VerifyClusterAndZone makes sure were not trying to configure cluster in wrong zone
-func VerifyClusterAndZone(clusterName string, request NamedConfigurationRequest) *appError {
-	if strings.ToLower(request.Zone) == zoneSbs {
-		if clusterName != clusterPreprodSbs && clusterName != clusterProdSbs {
-			glog.Errorf("User %s trying to configure OpenAM in FSS environment", request.Username)
-			return &appError{fmt.Errorf("Configuration in SBS can only be done from SBS domains, you are connecting to nameD in %s", clusterName), "Configuration failed", http.StatusBadRequest}
-		}
+// GetZone returns zone name for the cluster
+func GetZone(clusterName string) string {
+	switch clusterName {
+	case clusterPreprodSbs:
+		return zoneSbs
+	case clusterProdSbs:
+		return zoneSbs
+	case clusterPreprodFss:
+		return zoneFss
+	case clusterProdFss:
+		return zoneFss
 	}
-	if strings.ToLower(request.Zone) == zoneFss {
-		if clusterName != clusterPreprodFss && clusterName != clusterProdFss {
-			glog.Errorf("User %s trying to configure ISSO in SBS environment", request.Username)
-			return &appError{fmt.Errorf("Configuration in FSS can only be done from FSS domains, you are connecting to nameD in %s", clusterName), "Configuration failed", http.StatusBadRequest}
-		}
-	}
-	return nil
+
+	return ""
 }
 
 func validateFasitRequirements(fasit *FasitClient, request *NamedConfigurationRequest) *appError {
