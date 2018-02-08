@@ -20,12 +20,12 @@ named configure [flags]
 
 Flags:
   -a, --app string            name of your app
+  -c, --contexts string       comma separated list of context roots for ISSO agent
   -e, --environment string    environment you want to use (default "t0")
   -p, --password string       the password
   -u, --username string       the username
   -v, --version string        version you want to deploy
       --wait                  whether to wait until the deploy has succeeded (or failed)
-  -z, --zone string           the zone the app will be in (default "fss")
 ```
 
 The username and password may be specified using environment variable `NAIS_USERNAME` and `NAIS_PASSWORD` instead.
@@ -62,7 +62,7 @@ on push:
 
 ## dev notes
 
-```glide install --strip-vendor```
+```dep ensure```
 
 ...to fetch dependecies
 
