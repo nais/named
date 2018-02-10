@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/nais/named.svg?branch=master)](https://travis-ci.org/nais/named)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nais/named)](https://goreportcard.com/report/github.com/nais/named)
-
+[![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/nais/named/master/LICENSE)
 
 k8s in-cluster daemon with API for performing OpenAM-operations
 
