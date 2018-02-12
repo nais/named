@@ -247,8 +247,8 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 			contextRoot = "/" + contextRoot
 		}
 
-		if len(issoResource.ingressUrl) > 0 {
-			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.ingressUrl, contextRoot))
+		for _, url := range issoResource.ingressUrls {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, url, contextRoot))
 			counter++
 		}
 
@@ -257,9 +257,14 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 				contextRoot))
 			counter++
 		} else {
-			uriList = append(uriList, fmt.Sprintf("[%d]=https://app-%s.%s%s", counter, request.Environment,
-				defaultServiceDomain, contextRoot))
-			counter++
+			if "p" == request.Environment {
+				uriList = append(uriList, fmt.Sprintf("[%d]=https://app.%s%s", counter,	defaultServiceDomain, contextRoot))
+				counter++
+			} else {
+				uriList = append(uriList, fmt.Sprintf("[%d]=https://app-%s.%s%s", counter, request.Environment,
+					defaultServiceDomain, contextRoot))
+				counter++
+			}
 		}
 	}
 

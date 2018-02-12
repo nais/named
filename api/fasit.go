@@ -71,7 +71,7 @@ type IssoResource struct {
 	IssoIssuerUrl     string
 	IssoJwksUrl       string
 	loadbalancerUrl   string
-	ingressUrl        string
+	ingressUrls       []string
 	contextRoots      []string
 	nodes             []string
 	createLocalhost   bool
@@ -143,13 +143,13 @@ func (fasit FasitClient) GetIssoResource(request *NamedConfigurationRequest, zon
 	loadbalancerResource, _ := getFasitResource(fasit, loadbalancerResourceRequest, fasitEnvironment,
 		application, zone)
 
-	ingressUrl, err := fasit.GetIngressUrl(request, zone)
+	ingressUrls, err := fasit.GetIngressUrl(request, zone)
 	if err != nil {
 		return IssoResource{}, &appError{err, "Could not fetch ingress url for application", 404}
 	}
 
 	resource, appErr := fasit.mapToIssoResource(oidcUrlResource, oidcUserResource, oidcAgentResource,
-		loadbalancerResource, ingressUrl)
+		loadbalancerResource, ingressUrls)
 	if appErr != nil {
 		return IssoResource{}, appErr
 	}
@@ -201,7 +201,7 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 }
 
 func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource,
-	oidcAgentResource FasitResource, loadbalancerResource FasitResource, ingressUrl string) (resource IssoResource,
+	oidcAgentResource FasitResource, loadbalancerResource FasitResource, ingressUrls []string) (resource IssoResource,
 	appErr *appError) {
 	resource.oidcUrl = oidcUrlResource.Properties["url"]
 	issoUrl, err := insertPortNumber(oidcUrlResource.Properties["url"]+"/oauth2", 443)
@@ -232,7 +232,7 @@ func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUs
 	}
 
 	resource.loadbalancerUrl = loadbalancerResource.Properties["url"]
-	resource.ingressUrl = ingressUrl
+	resource.ingressUrls = ingressUrls
 
 	return resource, nil
 }
@@ -383,16 +383,17 @@ func (fasit FasitClient) getFasitEnvironment(environmentName string) (string, er
 	return fasitEnvironment.EnvironmentClass, nil
 }
 
-// GetIngressUrl fetches ingress url from environment class and zone
-func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest, zone string) (string, error) {
+// GetIngressUrl creates ingress urls from environment class and zone
+func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest, zone string) ([]string, error) {
 	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
 	domain := GetDomainFromZoneAndEnvironmentClass(environmentClass, zone)
+	ingressUrls := []string{fmt.Sprintf("%s.nais.%s", request.Application, domain), fmt.Sprintf("%s-%s.nais.%s", request.Application, request.Environment, domain)}
 
-	return fmt.Sprintf("%s.nais.%s", request.Application, domain), nil
+	return ingressUrls, nil
 }
 
 // GetDomainFromZoneAndEnvironmentClass returns domain string

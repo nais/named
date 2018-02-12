@@ -89,13 +89,15 @@ func TestFormatAmHeaderString(t *testing.T) {
 
 func TestCreateRedirectionUris(t *testing.T) {
 	request := NamedConfigurationRequest{ContextRoots: []string{"/testapp", "testapp2"}}
-	issoResource := IssoResource{loadbalancerUrl: "nais.example.com", ingressUrl: "test.test.domain"}
+	issoResource := IssoResource{loadbalancerUrl: "nais.example.com", ingressUrls: []string{"test.test.domain","testapp.test.domain"}}
 	uriList := CreateRedirectionUris(&issoResource, &request)
-	assert.Len(t, uriList, 4)
+	assert.Len(t, uriList, 6)
 	assert.Contains(t, uriList, "[0]=https://test.test.domain/testapp")
-	assert.Contains(t, uriList, "[1]=https://nais.example.com/testapp")
-	assert.Contains(t, uriList, "[2]=https://test.test.domain/testapp2")
-	assert.Contains(t, uriList, "[3]=https://nais.example.com/testapp2")
+	assert.Contains(t, uriList, "[1]=https://testapp.test.domain/testapp")
+	assert.Contains(t, uriList, "[2]=https://nais.example.com/testapp")
+	assert.Contains(t, uriList, "[3]=https://test.test.domain/testapp2")
+	assert.Contains(t, uriList, "[4]=https://testapp.test.domain/testapp2")
+	assert.Contains(t, uriList, "[5]=https://nais.example.com/testapp2")
 }
 
 func TestRest(t *testing.T) {
