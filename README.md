@@ -60,16 +60,11 @@ on push:
 - make and publish alpine docker image with binary to dockerhub
 - make and publish corresponding helm chart to quay.io 
 
-## dev notes
+## Development
 
+Fetch dependencies:
 ```dep ensure```
 
-...to fetch dependecies
-
-To reduce build time, do
-
+Build binary:
 ```go build -i .```
-
-initially. 
-
 

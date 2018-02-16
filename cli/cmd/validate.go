@@ -5,9 +5,10 @@ import (
 	"github.com/nais/named/api"
 	"github.com/spf13/cobra"
 	"os"
+	"io/ioutil"
 )
 
-var validateCmd = &cobra.Command{
+var validateSbsCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validates policy files",
 	Long:  `Validates policy files`,
@@ -16,6 +17,13 @@ var validateCmd = &cobra.Command{
 		file, err := cmd.Flags().GetString("file")
 		if err != nil {
 			fmt.Printf("Error when getting flag: file. %v", err)
+			os.Exit(1)
+		}
+
+		output, err := ioutil.ReadFile(file)
+		if err != nil {
+			fmt.Printf("Could not read file: %s. %v", file, err)
+			fmt.Printf("File contents: %s", output)
 			os.Exit(1)
 		}
 
@@ -29,6 +37,6 @@ var validateCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(validateCmd)
-	validateCmd.Flags().StringP("file", "f", "app-policies.xml", "path to file")
+	RootCmd.AddCommand(validateSbsCmd)
+	validateSbsCmd.Flags().StringP("file", "f", "app-policies.xml", "path to file")
 }

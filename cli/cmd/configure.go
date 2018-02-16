@@ -18,13 +18,13 @@ const configureEndpoint = "/configure"
 const defaultCluster = "preprod-fss"
 
 var clustersDict = map[string]string{
-	"nais-dev":     "nais.devillo.no",
-	"preprod-fss":  "nais.preprod.local",
-	"prod-fss":     "nais.adeo.no",
-	"preprod-iapp": "nais-iapp.preprod.local",
-	"prod-iapp":    "nais-iapp.adeo.no",
-	"preprod-sbs":  "nais.oera-q.local",
-	"prod-sbs":     "nais.oera.no",
+	"nais-dev":     "named.nais.devillo.no",
+	"preprod-fss":  "named.nais.preprod.local",
+	"prod-fss":     "named.nais.adeo.no",
+	"preprod-iapp": "named.nais-iapp.preprod.local",
+	"prod-iapp":    "named.nais-iapp.adeo.no",
+	"preprod-sbs":  "named.nais.oera-q.local",
+	"prod-sbs":     "named.nais.oera.no",
 }
 
 func validateCluster(cluster string) (string, error) {
@@ -79,6 +79,8 @@ var configurationCmd = &cobra.Command{
 			"cluster":     &cluster,
 		}
 
+		zone := api.GetZone(cluster)
+
 		for key, pointer := range strings {
 			if value, err := cmd.Flags().GetString(key); err != nil {
 				fmt.Printf("Error when getting flag: %s. %v\n", key, err)
@@ -88,7 +90,8 @@ var configurationCmd = &cobra.Command{
 			}
 		}
 
-		if err := configurationRequest.Validate(cluster); err != nil {
+
+		if err := configurationRequest.Validate(zone); err != nil {
 			fmt.Printf("Configuration request is not valid: %v\n", err)
 			os.Exit(1)
 		}
@@ -135,7 +138,7 @@ func init() {
 	configurationCmd.Flags().StringP("version", "v", "", "version you want to configure for")
 	configurationCmd.Flags().StringP("cluster", "c", "", "the cluster you want to deploy to")
 	configurationCmd.Flags().StringP("environment", "e", "t0", "environment you want to use")
-	configurationCmd.Flags().StringP("contexts", "c", "/", "the contexts to configure in ISSO")
+	configurationCmd.Flags().StringP("contextroots", "cr", "/", "the contexts to configure in ISSO")
 	configurationCmd.Flags().StringP("username", "u", "", "the username")
 	configurationCmd.Flags().StringP("password", "p", "", "the password")
 	configurationCmd.Flags().Bool("wait", false, "whether to wait until the deploy has succeeded (or failed)")

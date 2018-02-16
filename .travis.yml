@@ -3,21 +3,18 @@ services:
 - docker
 before_script:
 - docker pull navikt/dep
-- docker pull golang:1.9.4
+- docker pull golang:1.9
 - docker pull navikt/helm
 - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 - git clone https://github.com/nais/charts
 script:
 - make install test linux cli-dist
-- "/bin/bash bump.sh $GH_TOKEN"
-- git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push
-  --tags https://$GH_TOKEN@github.com/nais/named
+- /bin/bash bump.sh $GH_TOKEN
+- git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags https://$GH_TOKEN@github.com/nais/named
 - make docker-build push-dockerhub
 - cd charts
-- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package
-  /named/helm/named
-- docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts
-  .
+- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package /named/helm/named
+- docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts .
 - echo "<html><body><pre>$(cat index.yaml)</pre></body></html>" > index.html
 - git add --all
 - git commit -m "auto-update by travis [skip ci]"
@@ -27,7 +24,7 @@ deploy:
   provider: releases
   api_key: "$GH_TOKEN"
   file_glob: true
-  file: nais-*
+  file: name-*
   skip_cleanup: true
   on:
     branch: master
