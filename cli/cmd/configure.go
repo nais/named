@@ -137,7 +137,7 @@ func init() {
 	configurationCmd.Flags().StringP("version", "v", "", "version you want to configure for")
 	configurationCmd.Flags().StringP("cluster", "c", "", "the cluster you want to deploy to")
 	configurationCmd.Flags().StringP("environment", "e", "", "environment you want to use")
-	configurationCmd.Flags().StringP("contextroots", "cr", "", "the contexts to configure in ISSO")
+	configurationCmd.Flags().StringP("contextroots", "r", "", "the contexts to configure in ISSO")
 	configurationCmd.Flags().StringP("username", "u", "", "the username")
 	configurationCmd.Flags().StringP("password", "p", "", "the password")
 	configurationCmd.Flags().Bool("wait", false, "whether to wait until the deploy has succeeded (or failed)")
