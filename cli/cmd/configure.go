@@ -84,7 +84,7 @@ var configurationCmd = &cobra.Command{
 
 		if api.ZoneFss == zone {
 			if value, err := cmd.Flags().GetStringArray("contexts"); err != nil && len(value) > 0 {
-				&configurationRequest.ContextRoots = &value
+				configurationRequest.ContextRoots = value
 			}
 		}
 

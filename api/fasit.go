@@ -400,7 +400,7 @@ func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest, zone 
 func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string {
 	domain := "devillo.no"
 
-	if zoneFss == zone {
+	if ZoneFss == zone {
 		// Using same domain for t and q as they create the same ingress
 		switch environmentClass {
 		case "p":
@@ -412,7 +412,7 @@ func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string 
 		}
 	}
 
-	if zoneSbs == zone {
+	if ZoneSbs == zone {
 		switch environmentClass {
 		case "p":
 			domain = "oera.no"

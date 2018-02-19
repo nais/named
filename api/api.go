@@ -51,8 +51,8 @@ type appError struct {
 
 const (
 	sshPort           = "22"
-	zoneFss           = "fss"
-	zoneSbs           = "sbs"
+	ZoneFss           = "fss"
+	ZoneSbs           = "sbs"
 	clusterPreprodSbs = "preprod-sbs"
 	clusterPreprodFss = "preprod-fss"
 	clusterProdSbs    = "prod-sbs"
@@ -150,7 +150,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{nil, errorString, http.StatusBadRequest}
 	}
 
-	if zoneSbs == zone {
+	if ZoneSbs == zone {
 		w.Write([]byte("Configuring AM policies in SBS\n"))
 
 		appError := configureSBSOpenam(&fasitClient, &namedConfigurationRequest, zone)
@@ -161,7 +161,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		w.Write([]byte("AM policy configured for " + namedConfigurationRequest.Application + " in " +
 			namedConfigurationRequest.Environment))
 
-	} else if zoneFss == zone {
+	} else if ZoneFss == zone {
 		w.Write([]byte("Configuring ISSO agent in FSS\n"))
 
 		appError := configureFSSOpenam(&fasitClient, &namedConfigurationRequest, zone)
@@ -300,7 +300,7 @@ func (r NamedConfigurationRequest) Validate(zone string) []error {
 		}
 	}
 
-	if zone == zoneFss {
+	if zone == ZoneFss {
 		if len(r.ContextRoots) == 0 {
 			errs = append(errs, fmt.Errorf("ContextRoots are required but empty"))
 		}
@@ -335,13 +335,13 @@ func createResourceRequest(alias, resourceType string) ResourceRequest {
 func GetZone(clusterName string) string {
 	switch clusterName {
 	case clusterPreprodSbs:
-		return zoneSbs
+		return ZoneSbs
 	case clusterProdSbs:
-		return zoneSbs
+		return ZoneSbs
 	case clusterPreprodFss:
-		return zoneFss
+		return ZoneFss
 	case clusterProdFss:
-		return zoneFss
+		return ZoneFss
 	}
 
 	return ""
