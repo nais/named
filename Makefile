@@ -4,10 +4,11 @@ LATEST  := ${NAME}:latest
 DEP   := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named navikt/dep ensure
 GO_IMG  := golang:1.9
 GO      := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${GO_IMG} go
+LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 
 .PHONY: dockerhub-release install test linux bump tag cli cli-dist build docker-build push-dockerhub docker-minikube-build helm-upgrade
 
-dockerhub-release: install test linux bump tag docker-build push-dockerhub
+dockerhub-release: install test bump linux tag docker-build push-dockerhub
 minikube: linux docker-minikube-build helm-upgrade
 
 bump:
@@ -22,7 +23,6 @@ install:
 test:
 	${GO} test ./api/ ./cli/
 
-LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 cli:
 	${GO} build -ldflags='$(LDFLAGS)' -o name ./cli
 
