@@ -258,7 +258,7 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 			counter++
 		} else {
 			if "p" == request.Environment {
-				uriList = append(uriList, fmt.Sprintf("[%d]=https://app.%s%s", counter,	defaultServiceDomain, contextRoot))
+				uriList = append(uriList, fmt.Sprintf("[%d]=https://app.%s%s", counter, defaultServiceDomain, contextRoot))
 				counter++
 			} else {
 				uriList = append(uriList, fmt.Sprintf("[%d]=https://app-%s.%s%s", counter, request.Environment,

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/nais/named/api"
 	"github.com/spf13/cobra"
-	"os"
 	"io/ioutil"
+	"os"
 )
 
 var validateSbsCmd = &cobra.Command{

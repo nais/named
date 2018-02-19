@@ -18,13 +18,13 @@ const configureEndpoint = "/configure"
 const defaultCluster = "preprod-fss"
 
 var clustersDict = map[string]string{
-	"nais-dev":     "named.nais.devillo.no",
-	"preprod-fss":  "named.nais.preprod.local",
-	"prod-fss":     "named.nais.adeo.no",
-	"preprod-iapp": "named.nais-iapp.preprod.local",
-	"prod-iapp":    "named.nais-iapp.adeo.no",
-	"preprod-sbs":  "named.nais.oera-q.local",
-	"prod-sbs":     "named.nais.oera.no",
+	"nais-dev":     "nais.devillo.no",
+	"preprod-fss":  "nais.preprod.local",
+	"prod-fss":     "nais.adeo.no",
+	"preprod-iapp": "nais-iapp.preprod.local",
+	"prod-iapp":    "nais-iapp.adeo.no",
+	"preprod-sbs":  "nais.oera-q.local",
+	"prod-sbs":     "nais.oera.no",
 }
 
 func validateCluster(cluster string) (string, error) {
@@ -90,7 +90,6 @@ var configurationCmd = &cobra.Command{
 			}
 		}
 
-
 		if err := configurationRequest.Validate(zone); err != nil {
 			fmt.Printf("Configuration request is not valid: %v\n", err)
 			os.Exit(1)
@@ -137,8 +136,8 @@ func init() {
 	configurationCmd.Flags().StringP("app", "a", "", "name of your app")
 	configurationCmd.Flags().StringP("version", "v", "", "version you want to configure for")
 	configurationCmd.Flags().StringP("cluster", "c", "", "the cluster you want to deploy to")
-	configurationCmd.Flags().StringP("environment", "e", "t0", "environment you want to use")
-	configurationCmd.Flags().StringP("contextroots", "cr", "/", "the contexts to configure in ISSO")
+	configurationCmd.Flags().StringP("environment", "e", "", "environment you want to use")
+	configurationCmd.Flags().StringP("contextroots", "cr", "", "the contexts to configure in ISSO")
 	configurationCmd.Flags().StringP("username", "u", "", "the username")
 	configurationCmd.Flags().StringP("password", "p", "", "the password")
 	configurationCmd.Flags().Bool("wait", false, "whether to wait until the deploy has succeeded (or failed)")
