@@ -22,10 +22,10 @@ install:
 test:
 	${GO} test ./api/ ./cli/
 
+LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 cli:
 	${GO} build -ldflags='$(LDFLAGS)' -o name ./cli
 
-LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 cli-dist:
 	docker run --rm -v \
 		${PWD}\:/go/src/github.com/nais/named \
