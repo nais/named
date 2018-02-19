@@ -20,7 +20,8 @@ named configure [flags]
 
 Flags:
   -a, --app string            name of your app
-  -c, --contexts string       comma separated list of context roots for ISSO agent
+  -c, --cluster string	      name of cluster you want to configure
+  -r, --contexts string array list of context roots for ISSO agent
   -e, --environment string    environment you want to use (default "t0")
   -p, --password string       the password
   -u, --username string       the username
@@ -40,8 +41,8 @@ The commands below will assume you have already [downloaded a release](https://g
 
 ```sh
 xz -d named-<arch>-amd64.xz
-mv named-<arch>-amd64 /usr/local/bin/named
-chmod +x /usr/local/bin/named
+mv named-<arch>-amd64 /usr/local/bin/name
+chmod +x /usr/local/bin/name
 ```
 
 Where `<arch>` will be `linux` or `darwin`.

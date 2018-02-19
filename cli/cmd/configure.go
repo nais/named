@@ -42,12 +42,7 @@ func validateCluster(cluster string) (string, error) {
 }
 
 func getClusterUrl(cluster string) (string, error) {
-	urlEnv := os.Getenv("NAIS_CLUSTER_URL")
-
 	if len(cluster) == 0 {
-		if len(urlEnv) > 0 {
-			return urlEnv, nil
-		}
 		cluster = defaultCluster
 	}
 
@@ -64,10 +59,7 @@ var configurationCmd = &cobra.Command{
 	Short: "Configures your application in AM",
 	Long:  `Configures your application in AM`,
 	Run: func(cmd *cobra.Command, args []string) {
-		configurationRequest := api.NamedConfigurationRequest{
-			Username: os.Getenv("NAIS_USERNAME"),
-			Password: os.Getenv("NAIS_PASSWORD"),
-		}
+		configurationRequest := api.NamedConfigurationRequest{}
 
 		var cluster string
 		strings := map[string]*string{
@@ -87,6 +79,12 @@ var configurationCmd = &cobra.Command{
 				os.Exit(1)
 			} else if len(value) > 0 {
 				*pointer = value
+			}
+		}
+
+		if api.ZoneFss == zone {
+			if value, err := cmd.Flags().GetStringArray("contexts"); err != nil && len(value) > 0 {
+				&configurationRequest.ContextRoots = &value
 			}
 		}
 
