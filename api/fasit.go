@@ -398,16 +398,14 @@ func (fasit FasitClient) GetIngressUrl(request *NamedConfigurationRequest, zone 
 
 // GetDomainFromZoneAndEnvironmentClass returns domain string
 func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string {
-	domain := "devillo.no"
+	domain := "preprod.local"
 
 	if ZoneFss == zone {
 		// Using same domain for t and q as they create the same ingress
 		switch environmentClass {
 		case "p":
 			domain = "adeo.no"
-		case "t":
-			domain = "preprod.local"
-		case "q":
+		default:
 			domain = "preprod.local"
 		}
 	}
@@ -416,9 +414,7 @@ func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string 
 		switch environmentClass {
 		case "p":
 			domain = "oera.no"
-		case "t":
-			domain = "oera-t.local"
-		case "q":
+		default:
 			domain = "oera-q.local"
 		}
 	}

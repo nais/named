@@ -101,8 +101,12 @@ func TestGetIngressUrl(t *testing.T) {
 }
 
 func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
-	assert.Equal(t, "devillo.no", GetDomainFromZoneAndEnvironmentClass("q", "null"))
 	assert.Equal(t, "preprod.local", GetDomainFromZoneAndEnvironmentClass("t", "fss"))
+	assert.Equal(t, "preprod.local", GetDomainFromZoneAndEnvironmentClass("q", "null"))
+	assert.Equal(t, "oera-q.local", GetDomainFromZoneAndEnvironmentClass("null", "sbs"))
+	assert.Equal(t, "oera-q.local", GetDomainFromZoneAndEnvironmentClass("t", "sbs"))
+	assert.Equal(t, "adeo.no", GetDomainFromZoneAndEnvironmentClass("p", "fss"))
+	assert.Equal(t, "oera.no", GetDomainFromZoneAndEnvironmentClass("p", "sbs"))
 }
 
 func (fasit FakeFasitClient) getScopedResource(resourcesRequest ResourceRequest, environment, application, zone string) (OpenAmResource, AppError) {
