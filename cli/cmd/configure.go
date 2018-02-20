@@ -42,8 +42,14 @@ func validateCluster(cluster string) (string, error) {
 }
 
 func getClusterUrl(cluster string) (string, error) {
+	urlEnv := os.Getenv("NAIS_CLUSTER_URL")
+
 	if len(cluster) == 0 {
-		cluster = defaultCluster
+		if len(urlEnv) > 0 {
+			return urlEnv, nil
+		} else {
+			cluster = defaultCluster
+		}
 	}
 
 	url, err := validateCluster(cluster)
@@ -59,19 +65,23 @@ var configurationCmd = &cobra.Command{
 	Short: "Configures your application in AM",
 	Long:  `Configures your application in AM`,
 	Run: func(cmd *cobra.Command, args []string) {
-		configurationRequest := api.NamedConfigurationRequest{}
+		configurationRequest := api.NamedConfigurationRequest{
+			Username: os.Getenv("NAIS_USERNAME"),
+			Password: os.Getenv("NAIS_PASSWORD"),
+		}
 
 		var cluster string
 		strings := map[string]*string{
-			"app":         &configurationRequest.Application,
-			"version":     &configurationRequest.Version,
-			"environment": &configurationRequest.Environment,
-			"username":    &configurationRequest.Username,
-			"password":    &configurationRequest.Password,
-			"cluster":     &cluster,
+			"app":      &configurationRequest.Application,
+			"version":  &configurationRequest.Version,
+			"env":      &configurationRequest.Environment,
+			"username": &configurationRequest.Username,
+			"password": &configurationRequest.Password,
+			"cluster":  &cluster,
 		}
 
 		zone := api.GetZone(cluster)
+		fmt.Println("Zone: %s", zone)
 
 		for key, pointer := range strings {
 			if value, err := cmd.Flags().GetString(key); err != nil {
@@ -83,7 +93,7 @@ var configurationCmd = &cobra.Command{
 		}
 
 		if api.ZoneFss == zone {
-			if value, err := cmd.Flags().GetStringArray("contextroots"); err != nil && len(value) > 0 {
+			if value, err := cmd.Flags().GetStringArray("contexts"); err != nil && len(value) > 0 {
 				configurationRequest.ContextRoots = value
 			}
 		}
@@ -100,7 +110,6 @@ var configurationCmd = &cobra.Command{
 		}
 
 		jsonStr, err := json.Marshal(configurationRequest)
-
 		if err != nil {
 			fmt.Printf("Error while marshalling JSON: %v\n", err)
 			os.Exit(1)
@@ -108,12 +117,13 @@ var configurationCmd = &cobra.Command{
 
 		start := time.Now()
 		fmt.Println(string(jsonStr))
-		resp, err := http.Post(clusterUrl+configureEndpoint, "application/json", bytes.NewBuffer(jsonStr))
 
+		resp, err := http.Post(clusterUrl+configureEndpoint, "application/json", bytes.NewBuffer(jsonStr))
 		if err != nil {
 			fmt.Printf("Error while POSTing to API: %v\n", err)
 			os.Exit(1)
 		}
+
 		defer resp.Body.Close()
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -134,8 +144,8 @@ func init() {
 	configurationCmd.Flags().StringP("app", "a", "", "name of your app")
 	configurationCmd.Flags().StringP("version", "v", "", "version you want to configure for")
 	configurationCmd.Flags().StringP("cluster", "c", "", "the cluster you want to deploy to")
-	configurationCmd.Flags().StringP("environment", "e", "", "environment you want to use")
-	configurationCmd.Flags().StringP("contextroots", "r", "", "the context roots to configure in ISSO")
+	configurationCmd.Flags().StringP("env", "e", "", "environment you want to use")
+	configurationCmd.Flags().StringP("contexts", "r", "", "the context roots to configure in ISSO")
 	configurationCmd.Flags().StringP("username", "u", "", "the username")
 	configurationCmd.Flags().StringP("password", "p", "", "the password")
 	configurationCmd.Flags().Bool("wait", false, "whether to wait until the deploy has succeeded (or failed)")
