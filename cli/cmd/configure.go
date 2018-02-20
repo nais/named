@@ -42,14 +42,8 @@ func validateCluster(cluster string) (string, error) {
 }
 
 func getClusterUrl(cluster string) (string, error) {
-	urlEnv := os.Getenv("NAIS_CLUSTER_URL")
-
 	if len(cluster) == 0 {
-		if len(urlEnv) > 0 {
-			return urlEnv, nil
-		} else {
-			cluster = defaultCluster
-		}
+		cluster = defaultCluster
 	}
 
 	url, err := validateCluster(cluster)
@@ -81,7 +75,6 @@ var configurationCmd = &cobra.Command{
 		}
 
 		zone := api.GetZone(cluster)
-		fmt.Println("Zone: %s", zone)
 
 		for key, pointer := range strings {
 			if value, err := cmd.Flags().GetString(key); err != nil {
@@ -93,7 +86,10 @@ var configurationCmd = &cobra.Command{
 		}
 
 		if api.ZoneFss == zone {
-			if value, err := cmd.Flags().GetStringArray("contexts"); err != nil && len(value) > 0 {
+			if value, err := cmd.Flags().GetStringArray("contexts"); err != nil {
+				fmt.Printf("Flag --contexts/-c not defined")
+				os.Exit(1)
+			} else {
 				configurationRequest.ContextRoots = value
 			}
 		}
@@ -116,7 +112,6 @@ var configurationCmd = &cobra.Command{
 		}
 
 		start := time.Now()
-		fmt.Println(string(jsonStr))
 
 		resp, err := http.Post(clusterUrl+configureEndpoint, "application/json", bytes.NewBuffer(jsonStr))
 		if err != nil {
