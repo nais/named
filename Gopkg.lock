@@ -74,16 +74,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/nais/named"
-  packages = [
-    "api",
-    "api/version",
-    "cli/cmd"
-  ]
-  revision = "242012008a36f4f755350ddd36a4fa25f5d3a220"
-  version = "66.0.0"
-
-[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -207,6 +197,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c271c96bb1ac7df26d40d570b628d514a80c4b808dbe466f929bf048fe2e9b59"
+  inputs-digest = "a6144061af7ac5b1a3104ed6a5e0a6d06ca2c19526e615c82c9c3df3af46c1a1"
   solver-name = "gps-cdcl"
   solver-version = 1
