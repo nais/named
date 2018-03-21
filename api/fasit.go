@@ -13,6 +13,8 @@ import (
 
 func init() {
 	prometheus.MustRegister(httpReqsCounter)
+	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(errorCounter)
 }
 
 type scope struct {
@@ -424,7 +426,7 @@ func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string 
 
 var httpReqsCounter = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: "fasitAdapter",
+		Subsystem: "named_fasitAdapter",
 		Name:      "http_requests_total",
 		Help:      "How many HTTP requests processed, partitioned by status code and HTTP method.",
 	},
@@ -432,7 +434,7 @@ var httpReqsCounter = prometheus.NewCounterVec(
 
 var requestCounter = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: "fasit",
+		Subsystem: "named_fasit",
 		Name:      "requests",
 		Help:      "Incoming requests to fasitadapter",
 	},
@@ -440,7 +442,7 @@ var requestCounter = prometheus.NewCounterVec(
 
 var errorCounter = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: "fasit",
+		Subsystem: "named_fasit",
 		Name:      "errors",
 		Help:      "Errors occurred in fasitadapter",
 	},

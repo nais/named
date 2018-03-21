@@ -88,10 +88,10 @@ func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var (
 	requests = prometheus.NewCounterVec(
-		prometheus.CounterOpts{Name: "requests", Help: "requests pr path"}, []string{"path"},
+		prometheus.CounterOpts{Name: "named_requests", Help: "requests pr path"}, []string{"path"},
 	)
 	configurations = prometheus.NewCounterVec(
-		prometheus.CounterOpts{Name: "configurations", Help: "configurations done by nameD"}, []string{"nameD"},
+		prometheus.CounterOpts{Name: "named_configurations", Help: "configurations done by nameD"}, []string{"named_app"},
 	)
 )
 
