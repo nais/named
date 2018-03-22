@@ -215,7 +215,7 @@ func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return &appError{err, "AM policy files transfer failed", http.StatusBadRequest}
 	}
 
-	configurations.With(prometheus.Labels{"nameD": request.Application}).Inc()
+	configurations.With(prometheus.Labels{"named_app": request.Application}).Inc()
 	//JobQueue <- Job{Api: api}
 	if err := runAmPolicyScript(request, sshSession); err != nil {
 		glog.Errorf("Failed to run script; %s", err)
@@ -242,7 +242,7 @@ func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 
 	request.RedirectionUris = CreateRedirectionUris(&issoResource, request)
 
-	configurations.With(prometheus.Labels{"nameD": request.Application}).Inc()
+	configurations.With(prometheus.Labels{"named_app": request.Application}).Inc()
 	if am.AgentExists(agentName) {
 		glog.Infof("Deleting agent %s before re-creating it", agentName)
 		am.DeleteAgent(agentName)
