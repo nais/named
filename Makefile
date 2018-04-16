@@ -2,7 +2,7 @@ SHELL   := bash
 NAME    := navikt/named
 LATEST  := ${NAME}:latest
 DEP   := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named navikt/dep ensure
-GO_IMG  := golang:1.9
+GO_IMG  := golang:1.10
 GO      := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${GO_IMG} go
 LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 
