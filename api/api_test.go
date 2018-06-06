@@ -15,7 +15,7 @@ import (
 		"github.com/h2non/gock"*/)
 
 func TestAnIncorrectPayloadGivesError(t *testing.T) {
-	api := Api{}
+	api := API{}
 	body := strings.NewReader("gibberish")
 
 	req, err := http.NewRequest("POST", "/configure", body)
@@ -31,7 +31,7 @@ func TestAnIncorrectPayloadGivesError(t *testing.T) {
 }
 
 func TestInvalidFasit(t *testing.T) {
-	api := Api{"https://fasit.local", "testCluster"}
+	api := API{"https://fasit.local", "testCluster"}
 	jsn, _ := json.Marshal(CreateConfigurationRequest("appname", "123", "env", "test", "test", []string{"/test"}))
 
 	body := strings.NewReader(string(jsn))

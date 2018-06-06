@@ -89,7 +89,7 @@ func TestGetIngressUrl(t *testing.T) {
 		Reply(200).BodyString("{\"environmentclass\": \"q\"}")
 
 	request := NamedConfigurationRequest{Application: application, Environment: environmentName}
-	urls, err := fasit.GetIngressUrl(&request, zone)
+	urls, err := fasit.GetIngressURL(&request, zone)
 	assert.Equal(t, []string{"testapp.nais.preprod.local", "testapp-" + environmentName + ".nais.preprod.local"}, urls)
 	assert.Nil(t, err)
 }

@@ -5,8 +5,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-//SshConnect returns ssh client and session for specified host
-func SshConnect(resource *OpenAmResource, port string) (*ssh.Client, *ssh.Session, error) {
+//SSHConnect returns ssh client and session for specified host
+func SSHConnect(resource *OpenAmResource, port string) (*ssh.Client, *ssh.Session, error) {
 
 	sshConfig := &ssh.ClientConfig{
 		User: resource.Username,

@@ -20,9 +20,9 @@ import (
 	//"github.com/forgerock/frconfig/amconfig"
 )
 
-// Api contains fasit instance and cluster to fetch AM information from
-type Api struct {
-	FasitUrl    string
+// API contains fasit instance and cluster to fetch AM information from
+type API struct {
+	FasitURL    string
 	ClusterName string
 }
 
@@ -51,7 +51,9 @@ type appError struct {
 
 const (
 	sshPort           = "22"
+	// ZoneFss is secure zone
 	ZoneFss           = "fss"
+	// ZoneSbs is or outer zone
 	ZoneSbs           = "sbs"
 	clusterPreprodSbs = "preprod-sbs"
 	clusterPreprodFss = "preprod-fss"
@@ -59,10 +61,10 @@ const (
 	clusterProdFss    = "prod-fss"
 )
 
-// NewApi initializes fasit instance information
-func NewApi(fasitUrl, clusterName string) *Api {
-	return &Api{
-		FasitUrl:    fasitUrl,
+// NewAPI initializes fasit instance information
+func NewAPI(fasitURL, clusterName string) *API {
+	return &API{
+		FasitURL:    fasitURL,
 		ClusterName: clusterName,
 	}
 }
@@ -101,7 +103,7 @@ func init() {
 }
 
 // MakeHandler creates REST endpoint handlers
-func (api *Api) MakeHandler() http.Handler {
+func (api *API) MakeHandler() http.Handler {
 	mux := goji.NewMux()
 	mux.Handle(pat.Get("/isalive"), appHandler(api.isAlive))
 	mux.Handle(pat.Get("/metrics"), promhttp.Handler())
@@ -110,13 +112,13 @@ func (api *Api) MakeHandler() http.Handler {
 	return mux
 }
 
-func (api *Api) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
+func (api *API) isAlive(w http.ResponseWriter, _ *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "isalive"}).Inc()
 	fmt.Fprint(w, "")
 	return nil
 }
 
-func (api *Api) version(w http.ResponseWriter, _ *http.Request) *appError {
+func (api *API) version(w http.ResponseWriter, _ *http.Request) *appError {
 	response := map[string]string{"version": ver.Version, "revision": ver.Revision}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -126,7 +128,7 @@ func (api *Api) version(w http.ResponseWriter, _ *http.Request) *appError {
 	return nil
 }
 
-func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
+func (api *API) configure(w http.ResponseWriter, r *http.Request) *appError {
 	requests.With(prometheus.Labels{"path": "configure"}).Inc()
 
 	namedConfigurationRequest, err := unmarshalConfigurationRequest(r.Body)
@@ -134,7 +136,7 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{err, "Unable to unmarshal configuration namedConfigurationRequest", http.StatusBadRequest}
 	}
 
-	fasitClient := FasitClient{api.FasitUrl, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
+	fasitClient := FasitClient{api.FasitURL, namedConfigurationRequest.Username, namedConfigurationRequest.Password}
 	fasitErr := validateFasitRequirements(&fasitClient, &namedConfigurationRequest)
 	if fasitErr != nil {
 		return fasitErr
@@ -194,7 +196,7 @@ func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return &appError{err, "Policy files not found", http.StatusNotFound}
 	}
 
-	sshClient, sshSession, err := SshConnect(&openamResource, sshPort)
+	sshClient, sshSession, err := SSHConnect(&openamResource, sshPort)
 	if err != nil {
 		glog.Errorf("Could not get ssh session on %s %s", openamResource.Hostname, err)
 		return &appError{err, "SSH session failed", http.StatusServiceUnavailable}
@@ -216,7 +218,7 @@ func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 	}
 
 	configurations.With(prometheus.Labels{"named_app": request.Application}).Inc()
-	//JobQueue <- Job{Api: api}
+	//JobQueue <- Job{API: api}
 	if err := runAmPolicyScript(request, sshSession); err != nil {
 		glog.Errorf("Failed to run script; %s", err)
 		return &appError{err, "AM policy script failed", http.StatusBadRequest}

@@ -18,7 +18,7 @@ type AMConnection struct {
 	BaseURL  string
 	User     string
 	Password string
-	tokenId  string
+	tokenID  string
 	Realm    string
 }
 
@@ -40,7 +40,7 @@ type agentPayload struct {
 
 // GetAmConnection returns connection to AM server
 func GetAmConnection(issoResource *IssoResource) (am *AMConnection, err error) {
-	return openAdminConnection(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
+	return openAdminConnection(issoResource.oidcURL, issoResource.oidcUsername, issoResource.oidcPassword)
 }
 
 func openAdminConnection(url, username, password string) (am *AMConnection, err error) {
@@ -79,7 +79,7 @@ func (am *AMConnection) Authenticate() error {
 		return fmt.Errorf("failed to authenticate %v: %s", response.Status, err)
 	}
 
-	am.tokenId = a.TokenID
+	am.tokenID = a.TokenID
 
 	return nil
 }
@@ -102,7 +102,7 @@ func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*h
 		return request, fmt.Errorf("could not create new request, error: %v", err)
 	}
 
-	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
+	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenID}
 	request.AddCookie(&iPlanetCookie)
 	request.Header.Set("Content-Type", "application/json")
 	return request, nil
@@ -110,10 +110,10 @@ func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*h
 
 // AgentExists verifies existence of am agent
 func (am *AMConnection) AgentExists(agentName string) bool {
-	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	headers := map[string]string{"nav-isso": am.tokenId}
+	agentURL := am.BaseURL + "/json/agents/" + agentName
+	headers := map[string]string{"nav-isso": am.tokenID}
 
-	request, client, err := executeRequest(agentUrl, http.MethodGet, headers, nil)
+	request, client, err := executeRequest(agentURL, http.MethodGet, headers, nil)
 	if err != nil {
 		glog.Errorf("Could not execute request: %s", err)
 		return false
@@ -142,9 +142,9 @@ func (am *AMConnection) AgentExists(agentName string) bool {
 // CreateAgent creates am agent on isso server
 func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, issoResource *IssoResource,
 	namedConfigurationRequest *NamedConfigurationRequest) error {
-	agentUrl := am.BaseURL + "/json/agents/?_action=create"
+	agentURL := am.BaseURL + "/json/agents/?_action=create"
 	headers := map[string]string{
-		"nav-isso":     am.tokenId,
+		"nav-isso":     am.tokenID,
 		"Content-Type": "application/json"}
 
 	payload, err := json.Marshal(buildAgentPayload(agentName, issoResource.oidcAgentPassword, redirectionUris))
@@ -152,7 +152,7 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, 
 		return fmt.Errorf("could not marshal create request: %s", err)
 	}
 
-	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
+	request, client, err := executeRequest(agentURL, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("could not execute request to create agent: %s", err)
 	}
@@ -179,10 +179,10 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, 
 
 // DeleteAgent deletes am agent on isso server
 func (am *AMConnection) DeleteAgent(agentName string) error {
-	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	headers := map[string]string{"nav-isso": am.tokenId}
+	agentURL := am.BaseURL + "/json/agents/" + agentName
+	headers := map[string]string{"nav-isso": am.tokenID}
 
-	request, client, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
+	request, client, err := executeRequest(agentURL, http.MethodDelete, headers, nil)
 	if err != nil {
 		return fmt.Errorf("could not execute request to delete agent %s: %s", agentName, err)
 	}
@@ -247,13 +247,13 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 			contextRoot = "/" + contextRoot
 		}
 
-		for _, url := range issoResource.ingressUrls {
+		for _, url := range issoResource.ingressURLs {
 			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, url, contextRoot))
 			counter++
 		}
 
-		if len(issoResource.loadbalancerUrl) > 0 {
-			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerUrl,
+		if len(issoResource.loadbalancerURL) > 0 {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerURL,
 				contextRoot))
 			counter++
 		} else {
