@@ -156,14 +156,14 @@ func TestJsonExport(t *testing.T) {
 		File("testdata/amPolicyExport.json")
 
 	if err := amc.Authenticate(); err != nil {
-		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
+		glog.Errorf("could not authenticate on AM server %s: %s", baseUrl, err)
 	}
 
-	json, err := amc.ExportPolicies("json", "%2F")
+	jsn, err := amc.ExportPolicies("json", "%2F")
 	if err != nil {
-		glog.Errorf("Could not list resource types %s", err)
+		glog.Errorf("could not list resource types %s", err)
 	}
-	glog.Infof(json)
-	assert.NotEmpty(t, json)
+	glog.Infof(jsn)
+	assert.NotEmpty(t, jsn)
 	assert.True(t, true, gock.IsDone())
 }

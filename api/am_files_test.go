@@ -58,7 +58,7 @@ func TestInvalidFileGivesError(t *testing.T) {
 func TestCleanupNonExistingFilesGivesError(t *testing.T) {
 	policyFiles := []string{"testdata/app-policy-does-not-exist.xml"}
 	err := cleanupLocalFiles(policyFiles)
-	assert.Equal(t, "Could not remove file: testdata/app-policy-does-not-exist.xml", err.Error())
+	assert.Equal(t, "could not remove file: testdata/app-policy-does-not-exist.xml", err.Error())
 }
 
 func TestFetchNonExistingFilesShouldReturnError(t *testing.T) {

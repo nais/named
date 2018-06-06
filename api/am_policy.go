@@ -154,9 +154,8 @@ func (am *AMConnection) importPoliciesFromFile(filePath string) error {
 	if err != nil {
 		glog.Errorf("Can't open file %v, err=%v", filePath, err)
 	}
-	//r := bufio.NewReader(f)
 
-	bytes, err := ioutil.ReadAll(f)
+	policesBytes, err := ioutil.ReadAll(f)
 
 	if err != nil {
 		glog.Errorf("Can't read policy file. Err = %v", err)
@@ -165,7 +164,7 @@ func (am *AMConnection) importPoliciesFromFile(filePath string) error {
 
 	var p policyArrays
 
-	err = json.Unmarshal(bytes, &p)
+	err = json.Unmarshal(policesBytes, &p)
 
 	if err != nil {
 		glog.Errorf("Can't unmarshal json file, Err=%v", err)
@@ -183,14 +182,10 @@ func (am *AMConnection) CreatePolicies(obj *crest.FRObject, overWrite, continueO
 
 	for _, v := range *obj.Items {
 
-		// bytes,err :=  json.Marshal(v)
-
 		// cast to map so we can look at policy attrs
 		m := v.(map[string]interface{})
 
 		realm, _ := (*obj).Metadata["realm"]
-
-		//glog.Infof("Creating Policy %v realm = %s ", m, realm)
 
 		e := am.CreatePolicy(m, overWrite, realm)
 		if e != nil {
@@ -213,8 +208,8 @@ func (am *AMConnection) CreatePolicy(p map[string]interface{}, overWrite bool, r
 			glog.Infof("Warning - can't delete policy! err=%v", err)
 		}
 	}
-	json, err := json.Marshal(p)
-	r := bytes.NewReader(json)
+	jsn, err := json.Marshal(p)
+	r := bytes.NewReader(jsn)
 	url := fmt.Sprintf("/json%s/policies?_action=create", realm)
 	req, err := am.createNewRequest("POST", url, r)
 	if err != nil {
@@ -252,10 +247,7 @@ func (am *AMConnection) DeletePolicy(name, realm string) (err error) {
 	//glog.Infof("code = %d stat = %v", resp.StatusCode, resp.Status)
 
 	if resp.StatusCode != 404 && resp.StatusCode != 200 {
-		err = fmt.Errorf("Error deleting resource %s, err=%s", name, resp.Status)
+		err = fmt.Errorf("error deleting resource %s, err=%s", name, resp.Status)
 	}
 	return
 }
-
-// Script query - to get Uuid
-// http://openam.test.com:8080/openam/json/scripts?_pageSize=20&_sortKeys=name&_queryFilter=true&_pagedResultsOffset=0

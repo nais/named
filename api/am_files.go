@@ -84,7 +84,7 @@ func fetchPolicyFiles(urls []string, application string) ([]string, error) {
 		defer response.Body.Close()
 
 		if response.StatusCode > 299 {
-			return []string{}, fmt.Errorf("Got HTTP status code %d fetching manifest from URL: %s", response.StatusCode,
+			return []string{}, fmt.Errorf("got HTTP status code %d fetching manifest from URL: %s", response.StatusCode,
 				url)
 		}
 
@@ -103,18 +103,18 @@ func fetchPolicyFiles(urls []string, application string) ([]string, error) {
 func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, application string) error {
 	sftpClient, err := SftpConnect(sshClient)
 	if err != nil {
-		return fmt.Errorf("Could not transfer files to AM server: %s", err)
+		return fmt.Errorf("could not transfer files to AM server: %s", err)
 	}
 
 	for _, policyFile := range policyFiles {
 		srcFile, err := os.Open(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not openAdminConnection file %s: %s", policyFile, err)
+			return fmt.Errorf("could not openAdminConnection file %s: %s", policyFile, err)
 		}
 
 		srcFileInfo, err := srcFile.Stat()
 		if err != nil {
-			return fmt.Errorf("Could not stat file %s: %s", policyFile, err)
+			return fmt.Errorf("could not stat file %s: %s", policyFile, err)
 		}
 
 		defer srcFile.Close()
@@ -122,7 +122,7 @@ func CopyFilesToAmServer(sshClient *ssh.Client, policyFiles []string, applicatio
 		_ = sftpClient.Mkdir("/tmp/" + application)
 		destFile, err := sftpClient.Create(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not create am file %s: %s", policyFile, err)
+			return fmt.Errorf("could not create am file %s: %s", policyFile, err)
 		}
 		defer destFile.Close()
 
@@ -150,14 +150,14 @@ func UpdatePolicyFiles(policyFiles []string, environment string) error {
 	for _, policyFile := range policyFiles {
 		read, err := ioutil.ReadFile(policyFile)
 		if err != nil {
-			return fmt.Errorf("Could not read file %s", policyFile)
+			return fmt.Errorf("could not read file %s", policyFile)
 		}
 
 		newContents := strings.Replace(string(read), "${DomainName}", siteName, -1)
 
 		err = ioutil.WriteFile(policyFile, []byte(newContents), 0)
 		if err != nil {
-			return fmt.Errorf("Could not write file %s", policyFile)
+			return fmt.Errorf("could not write file %s", policyFile)
 		}
 
 	}
@@ -169,7 +169,7 @@ func cleanupLocalFiles(policyFiles []string) error {
 	for _, fileName := range policyFiles {
 		err := os.Remove(fileName)
 		if err != nil {
-			return fmt.Errorf("Could not remove file: %s", fileName)
+			return fmt.Errorf("could not remove file: %s", fileName)
 		}
 	}
 	return nil

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"bytes"
 )
 
 func init() {
@@ -21,6 +22,7 @@ type scope struct {
 	EnvironmentClass string `json:"environmentclass"`
 	Environment      string `json:"environment,omitempty"`
 	Zone             string `json:"zone,omitempty"`
+	Application      string `json:"application,omitempty"`
 }
 
 // Password contains fasit reference to the password
@@ -77,6 +79,13 @@ type IssoResource struct {
 	contextRoots      []string
 	nodes             []string
 	createLocalhost   bool
+}
+
+type OpenIdConnection struct {
+	jwksUrl   string
+	issuerUrl string
+	hostUrl   string
+	agentName string
 }
 
 const (
@@ -200,6 +209,55 @@ func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasit
 	}
 
 	return fasitResource, nil
+}
+
+func (fasit FasitClient) postOpenIdConnectResource(request ResourceRequest, openIdConnection OpenIdConnection,
+	fasitEnvironment string, application string, zone string, password string) {
+	resource := FasitResource{
+		Alias: request.Alias,
+		ResourceType: request.ResourceType,
+		Scope: scope{
+			Application: application,
+			EnvironmentClass: "",
+			Environment: fasitEnvironment,
+			Zone: zone,
+		},
+		Properties: map[string]string{
+			"agentName": openIdConnection.agentName,
+			"hostUrl": openIdConnection.hostUrl,
+			"issuerUrl": openIdConnection.issuerUrl,
+			"jwksUrl": openIdConnection.jwksUrl,
+		},
+		Secrets: map[string]map[string]string{
+			"password":{
+				"value": "passwordAsValue",
+			},
+		},
+	}
+
+	postFasitResource(fasit, resource)
+}
+
+func postFasitResource(fasit FasitClient, resource FasitResource) *appError {
+	asJson, err := json.Marshal(resource)
+	if err != nil {
+		return &appError{err, "Could not marshal openIdConnect resource", 500}
+	}
+
+	req, err := fasit.buildRequestWithPayload("POST", "/api/v2/resources", asJson)
+	if err != nil {
+		return &appError{err, "Error when building request with payload", 500}
+	}
+	body, appErr := fasit.doRequest(req)
+	if err != nil {
+		return appErr
+	}
+
+	if body != nil {
+		// last noes
+	}
+
+	return nil
 }
 
 func (fasit FasitClient) mapToIssoResource(oidcUrlResource FasitResource, oidcUserResource FasitResource,
@@ -336,7 +394,17 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
-func (fasit FasitClient) buildRequest(method, path string, queryParams map[string]string) (*http.Request, error) {
+func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []byte) (*http.Request, error) {
+	req, err := http.NewRequest(method,fasit.FasitUrl+path, bytes.NewBuffer(payload))
+	if err != nil {
+		errorCounter.WithLabelValues("create_request").Inc()
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryParams map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, fasit.FasitUrl+path, nil)
 
 	if err != nil {

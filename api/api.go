@@ -174,18 +174,18 @@ func (api *Api) configure(w http.ResponseWriter, r *http.Request) *appError {
 			namedConfigurationRequest.Environment + "\nRedirection URIs:\n\t" + strings.Join(namedConfigurationRequest.RedirectionUris,
 			"\n\t")))
 	} else {
-		return &appError{errors.New("No AM configurations available for this zone"), "Zone has to be fss or sbs, not " + zone, http.StatusBadRequest}
+		return &appError{errors.New("no AM configurations available for this zone"), "Zone has to be fss or sbs, not " + zone, http.StatusBadRequest}
 	}
 
 	return nil
 }
 
 func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, zone string) *appError {
-	openamResource, error := fasit.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"),
+	openamResource, apErr := fasit.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"),
 		request.Environment, request.Application, zone)
-	if error != nil {
-		glog.Errorf("Could not get OpenAM resource: %s", error)
-		return error
+	if apErr != nil {
+		glog.Errorf("Could not get OpenAM resource: %s", apErr)
+		return apErr
 	}
 
 	files, err := GenerateAmFiles(request)
@@ -228,16 +228,16 @@ func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, zone string) *appError {
 	agentName := fmt.Sprintf("%s-%s", request.Application, request.Environment)
 
-	issoResource, err := fasit.GetIssoResource(request, zone)
-	if err != nil {
-		glog.Errorf("Could not get OIDC resource: %s", err)
-		return err
+	issoResource, appErr := fasit.GetIssoResource(request, zone)
+	if appErr != nil {
+		glog.Errorf("Could not get OIDC resource: %s", appErr)
+		return appErr
 	}
 
-	am, error := GetAmConnection(&issoResource)
-	if error != nil {
-		glog.Errorf("Failed to connect to AM server: %s", error)
-		return &appError{error, "AM server connection failed", http.StatusServiceUnavailable}
+	am, err := GetAmConnection(&issoResource)
+	if err != nil {
+		glog.Errorf("Failed to connect to AM server: %s", err)
+		return &appError{err, "AM server connection failed", http.StatusServiceUnavailable}
 	}
 
 	request.RedirectionUris = CreateRedirectionUris(&issoResource, request)
@@ -276,7 +276,7 @@ func runAmPolicyScript(request *NamedConfigurationRequest, sshSession *ssh.Sessi
 	glog.Infof("Running command %s", cmd)
 	err := sshSession.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("Could not run command %s %s", cmd, err)
+		return fmt.Errorf("could not run command %s %s", cmd, err)
 	}
 	glog.Infof("AM policy updated for %s in environment %s", request.Application,
 		request.Environment)
@@ -286,11 +286,11 @@ func runAmPolicyScript(request *NamedConfigurationRequest, sshSession *ssh.Sessi
 // Validate performs validation of NamedConfigurationRequest
 func (r NamedConfigurationRequest) Validate(zone string) []error {
 	required := map[string]*string{
-		"Application": &r.Application,
-		"Version":     &r.Version,
-		"Environment": &r.Environment,
-		"Username":    &r.Username,
-		"Password":    &r.Password,
+		"application": &r.Application,
+		"version":     &r.Version,
+		"environment": &r.Environment,
+		"username":    &r.Username,
+		"password":    &r.Password,
 	}
 
 	var errs []error
@@ -302,7 +302,7 @@ func (r NamedConfigurationRequest) Validate(zone string) []error {
 
 	if zone == ZoneFss {
 		if len(r.ContextRoots) == 0 {
-			errs = append(errs, fmt.Errorf("ContextRoots are required but empty"))
+			errs = append(errs, fmt.Errorf("contextRoots are required but empty"))
 		}
 	}
 
@@ -312,12 +312,12 @@ func (r NamedConfigurationRequest) Validate(zone string) []error {
 func unmarshalConfigurationRequest(body io.ReadCloser) (NamedConfigurationRequest, error) {
 	requestBody, err := ioutil.ReadAll(body)
 	if err != nil {
-		return NamedConfigurationRequest{}, fmt.Errorf("Could not read configuration request body %s", err)
+		return NamedConfigurationRequest{}, fmt.Errorf("could not read configuration request body %s", err)
 	}
 
 	var request NamedConfigurationRequest
 	if err = json.Unmarshal(requestBody, &request); err != nil {
-		return NamedConfigurationRequest{}, fmt.Errorf("Could not unmarshal body %s", err)
+		return NamedConfigurationRequest{}, fmt.Errorf("could not unmarshal body %s", err)
 	}
 
 	return request, nil

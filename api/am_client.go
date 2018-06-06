@@ -66,7 +66,7 @@ func (am *AMConnection) Authenticate() error {
 
 	response, err := client.Do(request)
 	if err != nil {
-		return fmt.Errorf("Could not execute request: %s", err)
+		return fmt.Errorf("could not execute request: %s", err)
 	}
 
 	defer response.Body.Close()
@@ -76,7 +76,7 @@ func (am *AMConnection) Authenticate() error {
 	var a AuthNResponse
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Failed to authenticate %v: %s", response.Status, err)
+		return fmt.Errorf("failed to authenticate %v: %s", response.Status, err)
 	}
 
 	am.tokenId = a.TokenID
@@ -99,7 +99,7 @@ func (am *AMConnection) getRequestURL(path string) string {
 func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*http.Request, error) {
 	request, err := http.NewRequest(method, am.getRequestURL(url), body)
 	if err != nil {
-		return request, fmt.Errorf("Could not create new request, error: %v", err)
+		return request, fmt.Errorf("could not create new request, error: %v", err)
 	}
 
 	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
@@ -149,12 +149,12 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, 
 
 	payload, err := json.Marshal(buildAgentPayload(agentName, issoResource.oidcAgentPassword, redirectionUris))
 	if err != nil {
-		return fmt.Errorf("Could not marshal create request: %s", err)
+		return fmt.Errorf("could not marshal create request: %s", err)
 	}
 
 	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
-		return fmt.Errorf("Could not execute request to create agent: %s", err)
+		return fmt.Errorf("could not execute request to create agent: %s", err)
 	}
 
 	response, err := client.Do(request)
@@ -184,7 +184,7 @@ func (am *AMConnection) DeleteAgent(agentName string) error {
 
 	request, client, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
 	if err != nil {
-		return fmt.Errorf("Could not execute request to delete agent %s: %s", agentName, err)
+		return fmt.Errorf("could not execute request to delete agent %s: %s", agentName, err)
 	}
 
 	response, err := client.Do(request)
@@ -200,7 +200,7 @@ func (am *AMConnection) DeleteAgent(agentName string) error {
 
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Agent %s could not be deleted: %s", agentName, err)
+		return fmt.Errorf("agent %s could not be deleted: %s", agentName, err)
 	}
 	return nil
 }

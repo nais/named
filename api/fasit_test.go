@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/h2non/gock"
@@ -35,11 +34,6 @@ func TestGettingResource(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, hostname, resource.Hostname)
 	assert.Equal(t, username, resource.Username)
-}
-
-type FakeFasitClient struct {
-	FasitUrl string
-	FasitClient
 }
 
 func TestGetFasitApplication(t *testing.T) {
@@ -107,15 +101,4 @@ func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
 	assert.Equal(t, "oera-q.local", GetDomainFromZoneAndEnvironmentClass("t", "sbs"))
 	assert.Equal(t, "adeo.no", GetDomainFromZoneAndEnvironmentClass("p", "fss"))
 	assert.Equal(t, "oera.no", GetDomainFromZoneAndEnvironmentClass("p", "sbs"))
-}
-
-func (fasit FakeFasitClient) getScopedResource(resourcesRequest ResourceRequest, environment, application, zone string) (OpenAmResource, AppError) {
-	switch application {
-	case "notfound":
-		return OpenAmResource{}, appError{fmt.Errorf("not found"), "Resource not found in Fasit", 404}
-	case "fasitError":
-		return OpenAmResource{}, appError{fmt.Errorf("error from fasit"), "random error", 500}
-	default:
-		return OpenAmResource{}, nil
-	}
 }
