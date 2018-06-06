@@ -44,9 +44,9 @@ type AppError struct {
 }
 
 const (
-	sshPort           = "22"
+	sshPort = "22"
 	// ZoneFss is secure zone
-	ZoneFss           = "fss"
+	ZoneFss = "fss"
 	// ZoneSbs is or outer zone
 	ZoneSbs           = "sbs"
 	clusterPreprodSbs = "preprod-sbs"
