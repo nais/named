@@ -7,31 +7,34 @@ before_script:
 - docker pull navikt/helm
 - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 - git clone https://github.com/nais/charts
-script:
-- make install test
-- /bin/bash bump.sh $GH_TOKEN
-- make linux cli-dist
-- git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags https://$GH_TOKEN@github.com/nais/named
-- make docker-build push-dockerhub
-- cd charts
-- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package /named/helm/named
-- docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts .
-- echo "<html><body><pre>$(cat index.yaml)</pre></body></html>" > index.html
-- git add --all
-- git commit -m "auto-update by travis [skip ci]"
-- git push https://$GH_TOKEN@github.com/nais/charts
-- cd ..
-deploy:
-  provider: releases
-  api_key: "$GH_TOKEN"
-  file_glob: true
-  file: name-*
-  skip_cleanup: true
-  on:
-    branch: master
-branches:
-  only:
-  - master
+jobs:
+  include:
+    - stage: Test pull-request
+      script:
+        - make test
+        - golint
+    - stage: Master
+      script:
+        - make install test
+        - /bin/bash bump.sh $GH_TOKEN
+        - make linux cli-dist
+        - git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags https://$GH_TOKEN@github.com/nais/named
+        - make docker-build push-dockerhub
+        - cd charts
+        - docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package /named/helm/named
+        - docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts .
+        - echo "<html><body><pre>$(cat index.yaml)</pre></body></html>" > index.html
+        - git add --all
+        - git commit -m "auto-update by travis [skip ci]"
+        - git push https://$GH_TOKEN@github.com/nais/charts
+        - cd ..
+        deploy:
+          provider: releases
+          api_key: "$GH_TOKEN"
+          file_glob: true
+          file: name-*
+          skip_cleanup: true
+      if: branch = master
 notifications:
   slack:
     secure: xYTqHowKT9fkEz3hnd8q3uJGIW+clEUwOxc46tg/s0k5/0KzRS1BdvbLM6AWN4zpTII9AHiYU8mE39vICNXUrrLs7xhRm/gXOiACplGvdbvMliUY9jBDRW2N8muexz1sqTqy5qFp/vmJKHqeQKGSkamyE4Bv8Tg/0MnJMx6piNj8NqLWWiuosJbvt4kY6ZInB33NTrt7AQuaqnHPrL0eADQNxORNHDbnOsmVl7ApswEnUndEZ+h6abXgZAIelFhJTuOYnH2Py+XpcdxPNK7udy/qL78Aji1WrDxKMnY+Lhq1jhQGez0hMlpZyoaLVNkh5ZhWIgJB3zI3rg9ndNKEqGL0MreRsm2h1yFQMPMzItJ3xcsi8OWi62P8cA1AKFpzEZAZuZN+bOKStWdDUwOOeQXbYb137Fs7l8da2Wx+JuQc0FsxFqYSV5fV0aXjviNa16eB8xsUOKCx7fU3O9CTkxdqn+Evn1RMSCvSVlJwv3v+SESg+17TCFxk+m7AqJxPiewqzqODqY2WHOiQAGHT2x7vVp2QH0gqOBWYjXT+UyFFS6Mq7fzXx49wbBrOBzCnnURSWJ1k1/HGNyU19pFI95PDinhLrwVQ9ZzZ5ewm5W41vI/tHKZyIim9v4lpYByznMu0AlJ6PuWaNL5I1tnvbn9OPPDU8eWMpoDmelr7Tgk=
