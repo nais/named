@@ -10,13 +10,13 @@ import (
 const port string = ":8081"
 
 func main() {
-	fasitUrl := flag.String("fasitUrl", "https://fasit.example.no", "URL to fasit instance")
+	fasitURL := flag.String("fasitUrl", "https://fasit.example.no", "URL to fasit instance")
 	clusterName := flag.String("clusterName", "preprod-fss", "NAIS cluster name")
 	flag.Parse()
 
-	api := api.NewApi(*fasitUrl, *clusterName)
+	api := api.NewAPI(*fasitURL, *clusterName)
 
-	glog.Infof("Named running on port %s using fasit instance %s", port, *fasitUrl)
+	glog.Infof("Named running on port %s using fasit instance %s", port, *fasitURL)
 
 	err := http.ListenAndServe(port, api.MakeHandler())
 	if err != nil {

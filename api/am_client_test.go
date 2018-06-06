@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var baseUrl = "https://server.domain.com"
-var authUrl = "/json/authenticate"
-var policyUrl = "/json/policies"
-var amc = AMConnection{BaseURL: baseUrl, User: "user", Password: "pass"}
+var baseURL = "https://server.domain.com"
+var authURL = "/json/authenticate"
+var policyURL = "/json/policies"
+var amc = AMConnection{BaseURL: baseURL, User: "user", Password: "pass"}
 
 func TestGetRequestUrlShouldReturnConcatenatedString(t *testing.T) {
-	assert.Equal(t, baseUrl+authUrl, amc.getRequestURL(authUrl))
+	assert.Equal(t, baseURL+authURL, amc.getRequestURL(authURL))
 }
 
 func TestCreateNewRequestShouldReturnRequestWIthCookie(t *testing.T) {
-	testRequest, err := amc.createNewRequest("GET", baseUrl+policyUrl, nil)
+	testRequest, err := amc.createNewRequest("GET", baseURL+policyURL, nil)
 	assert.Nil(t, err)
 	assert.True(t, testRequest.Header.Get("Content-type") == "application/json")
 	assert.True(t, len(testRequest.Cookies()) == 1)
@@ -31,14 +31,14 @@ func TestAgentExists(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Get("/json/agents/testAgent").
-		MatchHeader("nav-isso", amc.tokenId).
+		MatchHeader("nav-isso", amc.tokenID).
 		Reply(200)
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Get("/json/agents/noTestAgent").
-		MatchHeader("nav-isso", amc.tokenId).
+		MatchHeader("nav-isso", amc.tokenID).
 		Reply(404)
 
 	assert.True(t, amc.AgentExists("testAgent"))
@@ -51,9 +51,9 @@ func TestCreateAgent(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Post("/json/agents/").
-		MatchHeader("nav-isso", amc.tokenId).
+		MatchHeader("nav-isso", amc.tokenID).
 		MatchParam("_action", "create").
 		Body(bytes.NewReader(payload)).
 		Reply(200)
@@ -66,14 +66,14 @@ func TestDeleteAgent(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Delete("/json/agents/testAgent").
-		MatchHeader("nav-isso", amc.tokenId).
+		MatchHeader("nav-isso", amc.tokenID).
 		Reply(200)
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Delete("/json/agents/noTestAgent").
-		MatchHeader("nav-isso", amc.tokenId).
+		MatchHeader("nav-isso", amc.tokenID).
 		Reply(404)
 
 	assert.Nil(t, amc.DeleteAgent("testAgent"))
@@ -89,7 +89,7 @@ func TestFormatAmHeaderString(t *testing.T) {
 
 func TestCreateRedirectionUris(t *testing.T) {
 	request := NamedConfigurationRequest{ContextRoots: []string{"/testapp", "testapp2"}}
-	issoResource := IssoResource{loadbalancerUrl: "nais.example.com", ingressUrls: []string{"test.test.domain", "testapp.test.domain"}}
+	issoResource := IssoResource{loadbalancerURL: "nais.example.com", ingressURLs: []string{"test.test.domain", "testapp.test.domain"}}
 	uriList := CreateRedirectionUris(&issoResource, &request)
 	assert.Len(t, uriList, 6)
 	assert.Contains(t, uriList, "[0]=https://test.test.domain/testapp")
@@ -104,8 +104,8 @@ func TestRest(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New(baseUrl).
-		Post(authUrl).
+	gock.New(baseURL).
+		Post(authURL).
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
@@ -114,7 +114,7 @@ func TestRest(t *testing.T) {
 		MatchParam("authIndexValue", "adminconsoleservice").
 		Reply(200)
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Get("/json/resourcetypes").
 		MatchParam("_queryFilter", "true").
 		Reply(200).
@@ -122,7 +122,7 @@ func TestRest(t *testing.T) {
 
 	err := amc.Authenticate()
 	if err != nil {
-		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
+		glog.Errorf("Could not authenticate on AM server %s: %s", baseURL, err)
 	}
 
 	rt, err := amc.ListResourceTypes()
@@ -142,28 +142,28 @@ func TestJsonExport(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New(baseUrl).
-		Post(authUrl).
+	gock.New(baseURL).
+		Post(authURL).
 		MatchHeader("Content-Type", "application/json").
 		MatchHeader("X-OpenAM-Username", "user").
 		MatchHeader("X-OpenAM-Password", "pass").
 		Reply(200)
 
-	gock.New(baseUrl).
+	gock.New(baseURL).
 		Get("/json/policies").
 		MatchParam("_queryFilter", "true").
 		Reply(200).
 		File("testdata/amPolicyExport.json")
 
 	if err := amc.Authenticate(); err != nil {
-		glog.Errorf("Could not authenticate on AM server %s: %s", baseUrl, err)
+		glog.Errorf("could not authenticate on AM server %s: %s", baseURL, err)
 	}
 
-	json, err := amc.ExportPolicies("json", "%2F")
+	jsn, err := amc.ExportPolicies("json", "%2F")
 	if err != nil {
-		glog.Errorf("Could not list resource types %s", err)
+		glog.Errorf("could not list resource types %s", err)
 	}
-	glog.Infof(json)
-	assert.NotEmpty(t, json)
+	glog.Infof(jsn)
+	assert.NotEmpty(t, jsn)
 	assert.True(t, true, gock.IsDone())
 }

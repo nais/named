@@ -48,7 +48,7 @@ func createObjects(obj *crest.FRObject, overwrite, continueOnError bool) (err er
 	case POLICY:
 		err = am.CreatePolicies(obj, overwrite, continueOnError)
 	default:
-		err = fmt.Errorf("Unknown object type %s", obj.Kind)
+		err = fmt.Errorf("unknown object type %s", obj.Kind)
 	}
 
 	return
