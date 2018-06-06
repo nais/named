@@ -37,6 +37,7 @@ type NamedConfigurationRequest struct {
 	RedirectionUris []string
 }
 
+// AppError collects error message and status code from http responses
 type AppError struct {
 	OriginalError error
 	Message       string
@@ -44,9 +45,9 @@ type AppError struct {
 }
 
 const (
-	sshPort           = "22"
+	sshPort = "22"
 	// ZoneFss is secure zone
-	ZoneFss           = "fss"
+	ZoneFss = "fss"
 	// ZoneSbs is or outer zone
 	ZoneSbs           = "sbs"
 	clusterPreprodSbs = "preprod-sbs"
@@ -63,9 +64,12 @@ func NewAPI(fasitURL, clusterName string) *API {
 	}
 }
 
+// Code returns status code of AppError
 func (e AppError) Code() int {
 	return e.StatusCode
 }
+
+// Error returns the error as a formatted string
 func (e AppError) Error() string {
 	if e.OriginalError != nil {
 		return fmt.Sprintf("%s: %s (%d)", e.Message, e.OriginalError.Error(), e.StatusCode)
