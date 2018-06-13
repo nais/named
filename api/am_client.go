@@ -18,7 +18,7 @@ type AMConnection struct {
 	BaseURL  string
 	User     string
 	Password string
-	tokenId  string
+	tokenID  string
 	Realm    string
 }
 
@@ -40,7 +40,7 @@ type agentPayload struct {
 
 // GetAmConnection returns connection to AM server
 func GetAmConnection(issoResource *IssoResource) (am *AMConnection, err error) {
-	return openAdminConnection(issoResource.oidcUrl, issoResource.oidcUsername, issoResource.oidcPassword)
+	return openAdminConnection(issoResource.oidcURL, issoResource.oidcUsername, issoResource.oidcPassword)
 }
 
 func openAdminConnection(url, username, password string) (am *AMConnection, err error) {
@@ -66,7 +66,7 @@ func (am *AMConnection) Authenticate() error {
 
 	response, err := client.Do(request)
 	if err != nil {
-		return fmt.Errorf("Could not execute request: %s", err)
+		return fmt.Errorf("could not execute request: %s", err)
 	}
 
 	defer response.Body.Close()
@@ -76,10 +76,10 @@ func (am *AMConnection) Authenticate() error {
 	var a AuthNResponse
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Failed to authenticate %v: %s", response.Status, err)
+		return fmt.Errorf("failed to authenticate %v: %s", response.Status, err)
 	}
 
-	am.tokenId = a.TokenID
+	am.tokenID = a.TokenID
 
 	return nil
 }
@@ -99,10 +99,10 @@ func (am *AMConnection) getRequestURL(path string) string {
 func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*http.Request, error) {
 	request, err := http.NewRequest(method, am.getRequestURL(url), body)
 	if err != nil {
-		return request, fmt.Errorf("Could not create new request, error: %v", err)
+		return request, fmt.Errorf("could not create new request, error: %v", err)
 	}
 
-	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenId}
+	iPlanetCookie := http.Cookie{Name: "iPlanetDirectoryPro", Value: am.tokenID}
 	request.AddCookie(&iPlanetCookie)
 	request.Header.Set("Content-Type", "application/json")
 	return request, nil
@@ -110,10 +110,10 @@ func (am *AMConnection) createNewRequest(method, url string, body io.Reader) (*h
 
 // AgentExists verifies existence of am agent
 func (am *AMConnection) AgentExists(agentName string) bool {
-	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	headers := map[string]string{"nav-isso": am.tokenId}
+	agentURL := am.BaseURL + "/json/agents/" + agentName
+	headers := map[string]string{"nav-isso": am.tokenID}
 
-	request, client, err := executeRequest(agentUrl, http.MethodGet, headers, nil)
+	request, client, err := executeRequest(agentURL, http.MethodGet, headers, nil)
 	if err != nil {
 		glog.Errorf("Could not execute request: %s", err)
 		return false
@@ -142,19 +142,19 @@ func (am *AMConnection) AgentExists(agentName string) bool {
 // CreateAgent creates am agent on isso server
 func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, issoResource *IssoResource,
 	namedConfigurationRequest *NamedConfigurationRequest) error {
-	agentUrl := am.BaseURL + "/json/agents/?_action=create"
+	agentURL := am.BaseURL + "/json/agents/?_action=create"
 	headers := map[string]string{
-		"nav-isso":     am.tokenId,
+		"nav-isso":     am.tokenID,
 		"Content-Type": "application/json"}
 
 	payload, err := json.Marshal(buildAgentPayload(agentName, issoResource.oidcAgentPassword, redirectionUris))
 	if err != nil {
-		return fmt.Errorf("Could not marshal create request: %s", err)
+		return fmt.Errorf("could not marshal create request: %s", err)
 	}
 
-	request, client, err := executeRequest(agentUrl, http.MethodPost, headers, bytes.NewReader(payload))
+	request, client, err := executeRequest(agentURL, http.MethodPost, headers, bytes.NewReader(payload))
 	if err != nil {
-		return fmt.Errorf("Could not execute request to create agent: %s", err)
+		return fmt.Errorf("could not execute request to create agent: %s", err)
 	}
 
 	response, err := client.Do(request)
@@ -179,12 +179,12 @@ func (am *AMConnection) CreateAgent(agentName string, redirectionUris []string, 
 
 // DeleteAgent deletes am agent on isso server
 func (am *AMConnection) DeleteAgent(agentName string) error {
-	agentUrl := am.BaseURL + "/json/agents/" + agentName
-	headers := map[string]string{"nav-isso": am.tokenId}
+	agentURL := am.BaseURL + "/json/agents/" + agentName
+	headers := map[string]string{"nav-isso": am.tokenID}
 
-	request, client, err := executeRequest(agentUrl, http.MethodDelete, headers, nil)
+	request, client, err := executeRequest(agentURL, http.MethodDelete, headers, nil)
 	if err != nil {
-		return fmt.Errorf("Could not execute request to delete agent %s: %s", agentName, err)
+		return fmt.Errorf("could not execute request to delete agent %s: %s", agentName, err)
 	}
 
 	response, err := client.Do(request)
@@ -200,7 +200,7 @@ func (am *AMConnection) DeleteAgent(agentName string) error {
 
 	err = json.Unmarshal(body, &a)
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Agent %s could not be deleted: %s", agentName, err)
+		return fmt.Errorf("agent %s could not be deleted: %s", agentName, err)
 	}
 	return nil
 }
@@ -247,13 +247,13 @@ func CreateRedirectionUris(issoResource *IssoResource, request *NamedConfigurati
 			contextRoot = "/" + contextRoot
 		}
 
-		for _, url := range issoResource.ingressUrls {
+		for _, url := range issoResource.ingressURLs {
 			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, url, contextRoot))
 			counter++
 		}
 
-		if len(issoResource.loadbalancerUrl) > 0 {
-			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerUrl,
+		if len(issoResource.loadbalancerURL) > 0 {
+			uriList = append(uriList, fmt.Sprintf("[%d]=https://%s%s", counter, issoResource.loadbalancerURL,
 				contextRoot))
 			counter++
 		} else {

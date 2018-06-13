@@ -1,4 +1,5 @@
-# named 
+named
+=====
 
 [![Build Status](https://travis-ci.org/nais/named.svg?branch=master)](https://travis-ci.org/nais/named)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nais/named)](https://goreportcard.com/report/github.com/nais/named)
@@ -12,6 +13,7 @@ Basic outline
 2. Get and inject environment specific variables from Fasit
 3. If SBS: Fetches app-policies.xml and not-enforced-urls.txt from internal artifact repository
 4. Creates appropriate OpenAM configuration
+
 
 #### Configure
 
@@ -31,11 +33,13 @@ Flags:
 
 The username and password may be specified using environment variable `NAIS_USERNAME` and `NAIS_PASSWORD` instead.
 
+
 ### Installation
 
 Binaries for `amd64` Linux, Darwin and Windows are automatically released on every build.
 
 The commands below will assume you have already [downloaded a release](https://github.com/nais/named/releases).
+
 
 ### Install Linux/macOS
 
@@ -47,9 +51,11 @@ chmod +x /usr/local/bin/name
 
 Where `<arch>` will be `linux` or `darwin`.
 
+
 ### Windows
 
 Unzip the release and place it somewhere.
+
 
 ## CI
 
@@ -60,6 +66,7 @@ on push:
 - bump version
 - make and publish alpine docker image with binary to dockerhub
 - make and publish corresponding helm chart to quay.io 
+
 
 ## Development
 

@@ -1,8 +1,9 @@
 SHELL   := bash
 NAME    := navikt/named
 LATEST  := ${NAME}:latest
-DEP   := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named navikt/dep ensure
-GO_IMG  := golang:1.9
+DEP_IMG := navikt/dep:2.0.0
+DEP     := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${DEP_IMG} dep
+GO_IMG  := golang:1.10
 GO      := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${GO_IMG} go
 LDFLAGS := -X github.com/nais/named/api/version.Revision=$(shell git rev-parse --short HEAD) -X github.com/nais/named/api/version.Version=$(shell /bin/cat ./version)
 
@@ -18,7 +19,7 @@ tag:
 	git tag -a $(shell /bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags
 
 install:
-	${DEP}
+	${DEP} ensure
 
 test:
 	${GO} test ./api/ ./cli/
