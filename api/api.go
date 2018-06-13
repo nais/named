@@ -352,12 +352,12 @@ func validateFasitRequirements(fasit *FasitClient, request *NamedConfigurationRe
 	fasitEnvironment := request.Environment
 
 	if _, err := fasit.GetFasitEnvironment(fasitEnvironment); err != nil {
-		glog.Errorf("Environment '%s' does not exist in Fasit", fasitEnvironment)
+		glog.Errorf("Could not find environment '%s' in Fasit", fasitEnvironment)
 		return err
 	}
 
 	if err := fasit.GetFasitApplication(request.Application); err != nil {
-		glog.Errorf("Application '%s' does not exist in Fasit", application)
+		glog.Errorf("Could not find application '%s' in Fasit", application)
 		return err
 	}
 
