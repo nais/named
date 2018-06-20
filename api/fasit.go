@@ -44,12 +44,11 @@ type FasitClient struct {
 // FasitResource contains resource information from fasit
 type FasitResource struct {
 	ID           int
-	Alias        string
-	ResourceType string `json:"type"`
-	Scope        scope  `json:"scope"`
-	Properties   map[string]string
-	Secrets      map[string]map[string]string
-	Certificates map[string]interface{} `json:"files"`
+	Alias        string                       `json:"alias"`
+	ResourceType string                       `json:"type"`
+	Scope        scope                        `json:"scope"`
+	Properties   map[string]string            `json:"properties"`
+	Secrets      map[string]map[string]string `json:"secrets"`
 }
 
 // ResourceRequest contains the alias and resource type for the fasit resource
