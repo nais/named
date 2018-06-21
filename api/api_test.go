@@ -9,10 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	/*	"bytes"
-		"fmt"
-		"golang.org/x/crypto/ssh"
-		"github.com/h2non/gock"*/)
+)
 
 func TestAnIncorrectPayloadGivesError(t *testing.T) {
 	api := API{}
