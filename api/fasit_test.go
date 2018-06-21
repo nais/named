@@ -102,3 +102,25 @@ func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
 	assert.Equal(t, "adeo.no", GetDomainFromZoneAndEnvironmentClass("p", "fss"))
 	assert.Equal(t, "oera.no", GetDomainFromZoneAndEnvironmentClass("p", "sbs"))
 }
+
+func TestPostFasitResources(t *testing.T) {
+	fasit := FasitClient{"https://fasit.local", "", ""}
+	issoResource := IssoResource{
+		oidcURL:           "oidcURL",
+		IssoIssuerURL:     "issoIssuerURL",
+		IssoJwksURL:       "issoJwksURL",
+		oidcUsername:      "oidcUsername",
+		oidcAgentPassword: "oicdAgentPassword",
+	}
+	fasitResource := CreateConfigurationRequest("appname", "123", "cd-u1", "test", "password", []string{"/test"})
+	payload := createFasitResourceForOpenIDConnect("t", issoResource, &fasitResource, "fss")
+
+	t.Run("POSTing openIDConnect resource", func(t *testing.T) {
+		gock.New("https://fasit.local").
+			Post("/api/v2/resources").
+			Reply(201)
+
+		appErr := postFasitResource(&fasit, payload)
+		assert.Nil(t, appErr)
+	})
+}
