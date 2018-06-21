@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"bytes"
+	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -85,6 +86,38 @@ const (
 	openidconnectagentalias = "OpenIdConnectAgent"
 	ResourceTypeOIDC        = "OpenIdConnect"
 )
+
+func (fasit FasitClient) CreateFasitResourceForOpenIDConnect(issoResource IssoResource, request *NamedConfigurationRequest, zone string) (FasitResource, *AppError) {
+	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
+	if err != nil {
+		glog.Errorf("Failed to retrieve EnvironmentClass from Fasit: %s", err)
+		return FasitResource{}, &AppError{err, "Failed to retreive EnvironmentClass from Fasit", http.StatusInternalServerError}
+	}
+
+	resource := FasitResource{
+		Alias:        fmt.Sprintf("%s-oidc", request.Application),
+		ResourceType: ResourceTypeOIDC,
+		Scope: scope{
+			Application:      request.Application,
+			EnvironmentClass: environmentClass,
+			Environment:      request.Environment,
+			Zone:             zone,
+		},
+		Properties: map[string]string{
+			"agentName": issoResource.oidcUsername,
+			"hostUrl":   issoResource.oidcURL,
+			"issuerUrl": issoResource.IssoIssuerURL,
+			"jwksUrl":   issoResource.IssoJwksURL,
+		},
+		Secrets: map[string]map[string]string{
+			"password": {
+				"value": issoResource.oidcAgentPassword,
+			},
+		},
+	}
+
+	return resource, nil
+}
 
 func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *AppError) {
 	requestCounter.With(nil).Inc()
@@ -338,7 +371,7 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
-func postFasitResource(fasit *FasitClient, resource FasitResource) *AppError {
+func (fasit FasitClient) PostFasitResource(resource FasitResource) *AppError {
 	payload, err := json.Marshal(resource)
 	if err != nil {
 		return &AppError{err, "Could not marshal openIdConnect resource", 500}

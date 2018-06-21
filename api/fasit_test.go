@@ -3,6 +3,7 @@ package api
 import (
 	"testing"
 
+	"encoding/json"
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 )
@@ -112,15 +113,35 @@ func TestPostFasitResources(t *testing.T) {
 		oidcUsername:      "oidcUsername",
 		oidcAgentPassword: "oicdAgentPassword",
 	}
-	fasitResource := CreateConfigurationRequest("appname", "123", "cd-u1", "test", "password", []string{"/test"})
-	payload := createFasitResourceForOpenIDConnect("t", issoResource, &fasitResource, "fss")
+	namedRequest := NamedConfigurationRequest{
+		Application: "appName",
+		Version:     "123",
+		Environment: "cd-u1",
+		Username:    "test",
+		Password:    "password",
+	}
+
+	defer gock.Off()
+
+	gock.New("https://fasit.local").
+		Get("/api/v2/environments/cd-u1").
+		Reply(200).BodyString("{\"environmentclass\": \"t\"}")
+
+	payload, fasitErr := fasit.CreateFasitResourceForOpenIDConnect(issoResource, &namedRequest, "fss")
+	assert.Nil(t, fasitErr)
+
+	t.Run("Test if payload is created correctly", func(t *testing.T) {
+		asJSON, err := json.Marshal(payload)
+		assert.NoError(t, err)
+		assert.Equal(t, "{\"ID\":0,\"alias\":\"appName-oidc\",\"type\":\"OpenIdConnect\",\"scope\":{\"environmentclass\":\"t\",\"environment\":\"cd-u1\",\"zone\":\"fss\",\"application\":\"appName\"},\"properties\":{\"agentName\":\"oidcUsername\",\"hostUrl\":\"oidcURL\",\"issuerUrl\":\"issoIssuerURL\",\"jwksUrl\":\"issoJwksURL\"},\"secrets\":{\"password\":{\"value\":\"oicdAgentPassword\"}}}", string(asJSON))
+	})
 
 	t.Run("POSTing openIDConnect resource", func(t *testing.T) {
 		gock.New("https://fasit.local").
 			Post("/api/v2/resources").
 			Reply(201)
 
-		appErr := postFasitResource(&fasit, payload)
+		appErr := fasit.PostFasitResource(payload)
 		assert.Nil(t, appErr)
 	})
 }
