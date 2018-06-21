@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"bytes"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -82,6 +83,7 @@ type IssoResource struct {
 const (
 	openidconnectalias      = "OpenIdConnect"
 	openidconnectagentalias = "OpenIdConnectAgent"
+	ResourceTypeOIDC        = "OpenIdConnect"
 )
 
 func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *AppError) {
@@ -336,6 +338,25 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
+func postFasitResource(fasit *FasitClient, resource FasitResource) *AppError {
+	payload, err := json.Marshal(resource)
+	if err != nil {
+		return &AppError{err, "Could not marshal openIdConnect resource", 500}
+	}
+
+	req, err := fasit.buildRequestWithPayload("POST", "/api/v2/resources", payload)
+	if err != nil {
+		return &AppError{err, "Error when building request with payload", 500}
+	}
+
+	_, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return appErr
+	}
+
+	return nil
+}
+
 func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryParams map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, fasit.FasitURL+path, nil)
 
@@ -350,6 +371,16 @@ func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryP
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
+	return req, nil
+}
+
+func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []byte) (*http.Request, error) {
+	req, err := http.NewRequest(method, fasit.FasitURL+path, bytes.NewBuffer(payload))
+	if err != nil {
+		errorCounter.WithLabelValues("create_request").Inc()
+		return nil, err
+	}
+
 	return req, nil
 }
 

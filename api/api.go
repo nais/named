@@ -255,7 +255,46 @@ func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return &AppError{agentErr, "AM agent creation failed", http.StatusBadRequest}
 	}
 
+	glog.Info("Creating payload for OpenIDConnect")
+	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
+	if err != nil {
+		glog.Errorf("Failed to retrieve EnvironmentClass from Fasit: %s", err)
+		return &AppError{err, "Failed to retreive EnvironmentClass from Fasit", http.StatusInternalServerError}
+	}
+	payload := createFasitResourceForOpenIDConnect(environmentClass, issoResource, request, zone)
+	appErr = postFasitResource(fasit, payload)
+	if appErr != nil {
+		glog.Errorf("Failed to post OpenIDConnect resource to Fasit: %s", appErr)
+		return appErr
+	}
+
 	return nil
+}
+
+func createFasitResourceForOpenIDConnect(environmentClass string, issoResource IssoResource, request *NamedConfigurationRequest, zone string) (resource FasitResource) {
+	resource = FasitResource{
+		Alias:        fmt.Sprintf("%s-oidc", request.Application),
+		ResourceType: ResourceTypeOIDC,
+		Scope: scope{
+			Application:      request.Application,
+			EnvironmentClass: environmentClass,
+			Environment:      request.Environment,
+			Zone:             zone,
+		},
+		Properties: map[string]string{
+			"agentName": issoResource.oidcUsername,
+			"hostUrl":   issoResource.oidcURL,
+			"issuerUrl": issoResource.IssoIssuerURL,
+			"jwksUrl":   issoResource.IssoJwksURL,
+		},
+		Secrets: map[string]map[string]string{
+			"password": {
+				"value": issoResource.oidcAgentPassword,
+			},
+		},
+	}
+
+	return
 }
 
 func runAmPolicyScript(request *NamedConfigurationRequest, sshSession *ssh.Session) error {
