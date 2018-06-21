@@ -174,7 +174,7 @@ func (fasit FasitClient) GetOpenAmResource(resourcesRequest ResourceRequest, fas
 }
 
 func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, *AppError) {
-	req, err := fasit.buildRequest("GET", "/api/v2/scopedresource", map[string]string{
+	req, err := fasit.buildRequestWithQueryParams("GET", "/api/v2/scopedresource", map[string]string{
 		"alias":       resourcesRequest.Alias,
 		"type":        resourcesRequest.ResourceType,
 		"environment": fasitEnvironment,
@@ -336,7 +336,7 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
-func (fasit FasitClient) buildRequest(method, path string, queryParams map[string]string) (*http.Request, error) {
+func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryParams map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, fasit.FasitURL+path, nil)
 
 	if err != nil {
