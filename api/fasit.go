@@ -371,13 +371,13 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
-func (fasit FasitClient) PostFasitResource(resource FasitResource) *AppError {
+func (fasit FasitClient) PostFasitResource(resource FasitResource, request *NamedConfigurationRequest) *AppError {
 	payload, err := json.Marshal(resource)
 	if err != nil {
 		return &AppError{err, "Could not marshal openIdConnect resource", 500}
 	}
 
-	req, err := fasit.buildRequestWithPayload("POST", "/api/v2/resources", payload)
+	req, err := fasit.buildRequestWithPayload("POST", "/api/v2/resources", payload, request)
 	if err != nil {
 		return &AppError{err, "Error when building request with payload", 500}
 	}
@@ -407,8 +407,11 @@ func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryP
 	return req, nil
 }
 
-func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []byte) (*http.Request, error) {
+func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []byte, request *NamedConfigurationRequest) (*http.Request,
+	error) {
 	req, err := http.NewRequest(method, fasit.FasitURL+path, bytes.NewBuffer(payload))
+	req.SetBasicAuth(request.Username, request.Password)
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		errorCounter.WithLabelValues("create_request").Inc()
 		return nil, err

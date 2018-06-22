@@ -141,7 +141,7 @@ func TestPostFasitResources(t *testing.T) {
 			Post("/api/v2/resources").
 			Reply(201)
 
-		appErr := fasit.PostFasitResource(payload)
+		appErr := fasit.PostFasitResource(payload, &namedRequest)
 		assert.Nil(t, appErr)
 	})
 }
