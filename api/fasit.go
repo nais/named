@@ -104,7 +104,7 @@ func (fasit FasitClient) CreateFasitResourceForOpenIDConnect(issoResource IssoRe
 			Zone:             zone,
 		},
 		Properties: map[string]string{
-			"agentName": issoResource.oidcUsername,
+			"agentName": request.Application + "-" + request.Environment,
 			"hostUrl":   issoResource.oidcURL,
 			"issuerUrl": issoResource.IssoIssuerURL,
 			"jwksUrl":   issoResource.IssoJwksURL,
