@@ -32,7 +32,7 @@ Flags:
 ```
 
 The username and password may be specified using environment variable `NAIS_USERNAME` and `NAIS_PASSWORD` instead.
-
+curl can also be used to initialize the service.
 
 ### Installation
 
