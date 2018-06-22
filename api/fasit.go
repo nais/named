@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"bytes"
+	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -44,12 +46,11 @@ type FasitClient struct {
 // FasitResource contains resource information from fasit
 type FasitResource struct {
 	ID           int
-	Alias        string
-	ResourceType string `json:"type"`
-	Scope        scope  `json:"scope"`
-	Properties   map[string]string
-	Secrets      map[string]map[string]string
-	Certificates map[string]interface{} `json:"files"`
+	Alias        string                       `json:"alias"`
+	ResourceType string                       `json:"type"`
+	Scope        scope                        `json:"scope"`
+	Properties   map[string]string            `json:"properties"`
+	Secrets      map[string]map[string]string `json:"secrets"`
 }
 
 // ResourceRequest contains the alias and resource type for the fasit resource
@@ -83,7 +84,40 @@ type IssoResource struct {
 const (
 	openidconnectalias      = "OpenIdConnect"
 	openidconnectagentalias = "OpenIdConnectAgent"
+	ResourceTypeOIDC        = "OpenIdConnect"
 )
+
+func (fasit FasitClient) CreateFasitResourceForOpenIDConnect(issoResource IssoResource, request *NamedConfigurationRequest, zone string) (FasitResource, *AppError) {
+	environmentClass, err := fasit.getFasitEnvironment(request.Environment)
+	if err != nil {
+		glog.Errorf("Failed to retrieve EnvironmentClass from Fasit: %s", err)
+		return FasitResource{}, &AppError{err, "Failed to retreive EnvironmentClass from Fasit", http.StatusInternalServerError}
+	}
+
+	resource := FasitResource{
+		Alias:        fmt.Sprintf("%s-oidc", request.Application),
+		ResourceType: ResourceTypeOIDC,
+		Scope: scope{
+			Application:      request.Application,
+			EnvironmentClass: environmentClass,
+			Environment:      request.Environment,
+			Zone:             zone,
+		},
+		Properties: map[string]string{
+			"agentName": issoResource.oidcUsername,
+			"hostUrl":   issoResource.oidcURL,
+			"issuerUrl": issoResource.IssoIssuerURL,
+			"jwksUrl":   issoResource.IssoJwksURL,
+		},
+		Secrets: map[string]map[string]string{
+			"password": {
+				"value": issoResource.oidcAgentPassword,
+			},
+		},
+	}
+
+	return resource, nil
+}
 
 func (fasit FasitClient) doRequest(r *http.Request) ([]byte, *AppError) {
 	requestCounter.With(nil).Inc()
@@ -175,7 +209,7 @@ func (fasit FasitClient) GetOpenAmResource(resourcesRequest ResourceRequest, fas
 }
 
 func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, *AppError) {
-	req, err := fasit.buildRequest("GET", "/api/v2/scopedresource", map[string]string{
+	req, err := fasit.buildRequestWithQueryParams("GET", "/api/v2/scopedresource", map[string]string{
 		"alias":       resourcesRequest.Alias,
 		"type":        resourcesRequest.ResourceType,
 		"environment": fasitEnvironment,
@@ -337,7 +371,26 @@ func getFirstKey(m map[string]map[string]string) string {
 	return ""
 }
 
-func (fasit FasitClient) buildRequest(method, path string, queryParams map[string]string) (*http.Request, error) {
+func (fasit FasitClient) PostFasitResource(resource FasitResource) *AppError {
+	payload, err := json.Marshal(resource)
+	if err != nil {
+		return &AppError{err, "Could not marshal openIdConnect resource", 500}
+	}
+
+	req, err := fasit.buildRequestWithPayload("POST", "/api/v2/resources", payload)
+	if err != nil {
+		return &AppError{err, "Error when building request with payload", 500}
+	}
+
+	_, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return appErr
+	}
+
+	return nil
+}
+
+func (fasit FasitClient) buildRequestWithQueryParams(method, path string, queryParams map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, fasit.FasitURL+path, nil)
 
 	if err != nil {
@@ -351,6 +404,16 @@ func (fasit FasitClient) buildRequest(method, path string, queryParams map[strin
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
+	return req, nil
+}
+
+func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []byte) (*http.Request, error) {
+	req, err := http.NewRequest(method, fasit.FasitURL+path, bytes.NewBuffer(payload))
+	if err != nil {
+		errorCounter.WithLabelValues("create_request").Inc()
+		return nil, err
+	}
+
 	return req, nil
 }
 

@@ -255,6 +255,19 @@ func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return &AppError{agentErr, "AM agent creation failed", http.StatusBadRequest}
 	}
 
+	glog.Info("Creating and POST'ing payload for OpenIDConnect")
+	payload, appErr := fasit.CreateFasitResourceForOpenIDConnect(issoResource, request, zone)
+	if err != nil {
+		glog.Errorf("Failed to create payload for OpenIDConnect: %s", appErr)
+		return appErr
+	}
+
+	appErr = fasit.PostFasitResource(payload)
+	if appErr != nil {
+		glog.Errorf("Failed to post OpenIDConnect resource to Fasit: %s", appErr)
+		return appErr
+	}
+
 	return nil
 }
 
