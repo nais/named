@@ -208,6 +208,15 @@ func (fasit FasitClient) GetOpenAmResource(resourcesRequest ResourceRequest, fas
 	return resource, nil
 }
 
+func (fasit FasitClient) existOpenIDConnectResourceInFasit(request ResourceRequest, fasitEnvironment string, application string, zone string) (bool, *AppError) {
+	fasitResource, fasitErr := getFasitResource(fasit, request, fasitEnvironment, application, zone)
+	if fasitErr != nil {
+		return false, fasitErr
+	}
+
+	return fasitResource.Alias != "", nil
+}
+
 func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, *AppError) {
 	req, err := fasit.buildRequestWithQueryParams("GET", "/api/v2/scopedresource", map[string]string{
 		"alias":       resourcesRequest.Alias,
@@ -369,6 +378,27 @@ func getFirstKey(m map[string]map[string]string) string {
 		}
 	}
 	return ""
+}
+
+func (fasit FasitClient) UpdateFasitResource(resource FasitResource, request *NamedConfigurationRequest) *AppError {
+	payload, err := json.Marshal(resource)
+	if err != nil {
+		errorCounter.WithLabelValues("marshal_body").Inc()
+		return &AppError{err, "Could not marshal openIdConnect resource", 500}
+	}
+
+	req, err := fasit.buildRequestWithPayload("PUT", "/api/v2/resources", payload, request)
+	if err != nil {
+		errorCounter.WithLabelValues("marshal_body").Inc()
+		return &AppError{err, "Error when building request with payload", 500}
+	}
+
+	_, appErr := fasit.doRequest(req)
+	if appErr != nil {
+		return appErr
+	}
+
+	return nil
 }
 
 func (fasit FasitClient) PostFasitResource(resource FasitResource, request *NamedConfigurationRequest) *AppError {
