@@ -153,9 +153,9 @@ func TestPostFasitResources(t *testing.T) {
 	t.Run("Test if payload is created correctly", func(t *testing.T) {
 		asJSON, err := json.Marshal(payload)
 		assert.NoError(t, err)
-		assert.Equal(t, "{\"ID\":0,\"alias\":\"appName-oidc\",\"type\":\"OpenIdConnect\"," +
-			"\"scope\":{\"environmentclass\":\"t\",\"environment\":\"cd-u1\",\"zone\":\"fss\"," +
-			"\"application\":\"appName\"},\"properties\":{\"agentName\":\"appName-cd-u1\",\"hostUrl\":\"oidcURL\"," +
+		assert.Equal(t, "{\"ID\":0,\"alias\":\"appName-oidc\",\"type\":\"OpenIdConnect\","+
+			"\"scope\":{\"environmentclass\":\"t\",\"environment\":\"cd-u1\",\"zone\":\"fss\","+
+			"\"application\":\"appName\"},\"properties\":{\"agentName\":\"appName-cd-u1\",\"hostUrl\":\"oidcURL\","+
 			"\"issuerUrl\":\"issoIssuerURL\",\"jwksUrl\":\"issoJwksURL\"},\"secrets\":{\"password\":{\"value\":\"oicdAgentPassword\"}}}", string(asJSON))
 	})
 
