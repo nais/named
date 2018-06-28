@@ -85,6 +85,7 @@ const (
 	openidconnectalias      = "OpenIdConnect"
 	openidconnectagentalias = "OpenIdConnectAgent"
 	ResourceTypeOIDC        = "OpenIdConnect"
+	ResourceTypeOpenAM      = "OpenAM"
 )
 
 func (fasit FasitClient) CreateFasitResourceForOpenIDConnect(issoResource IssoResource, request *NamedConfigurationRequest, zone string) (FasitResource, *AppError) {

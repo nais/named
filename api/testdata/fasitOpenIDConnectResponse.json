@@ -1,0 +1,36 @@
+{
+  "type": "openidconnect",
+  "alias": "get-opendiconnect-resource",
+  "scope": {
+    "environmentclass": "t",
+    "zone": "zone",
+    "environment": "t6",
+    "application": "testapp"
+  },
+  "properties": {
+    "jwksUrl": "https://isso-t.local:443/isso/oauth2/connect/jwk_uri",
+    "issuerUrl": "https://isso-t.local:443:443/isso/oauth2",
+    "agentName": "nais-testapp-t6",
+    "hostUrl": "https://isso-t.local:443/isso"
+  },
+  "secrets": {
+    "password": {
+      "ref": "https://fasit.local/api/v2/secrets/123456"
+    }
+  },
+  "files": {},
+  "dodgy": false,
+  "id": 256,
+  "revision": 256,
+  "created": "2018-06-22T13:54:02.949",
+  "updated": "2018-06-22T13:54:02.949",
+  "lifecycle": {},
+  "accesscontrol": {
+    "environmentclass": "t",
+    "adgroups": []
+  },
+  "links": {
+    "self": "https://fasit.adeo.no/api/v2/resources/5213612",
+    "revisions": "https://fasit.adeo.no/api/v2/resources/5213612/revisions"
+  }
+}

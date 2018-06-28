@@ -1,6 +1,6 @@
 {
   "type": "OpenAm",
-  "alias": "openam",
+  "alias": "get-openam-resource",
   "scope": {
     "environmentclass": "t",
     "environment": "testname",
