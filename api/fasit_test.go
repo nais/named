@@ -9,10 +9,8 @@ import (
 )
 
 func TestGettingResource(t *testing.T) {
-	alias := "openam"
-	resourceType := "OpenAm"
+	application := "testapp"
 	environment := "testname"
-	application := "openam"
 	zone := "zone"
 	hostname := "hostname.domain.com"
 	username := "user"
@@ -21,20 +19,42 @@ func TestGettingResource(t *testing.T) {
 
 	defer gock.Off()
 
-	gock.New("https://fasit.local").
-		Get("/api/v2/scopedresource").
-		MatchParam("alias", alias).
-		MatchParam("type", resourceType).
-		MatchParam("environment", environment).
-		MatchParam("application", application).
-		MatchParam("zone", zone).
-		Reply(200).File("testdata/fasitAmResponse.json")
+	t.Run("Get openam ressurs", func(t *testing.T) {
+		alias := "get-openam-resource"
+		resourceType := ResourceTypeOpenAM
+		gock.New("https://fasit.local").
+			Get("/api/v2/scopedresource").
+			MatchParam("alias", alias).
+			MatchParam("type", resourceType).
+			MatchParam("environment", environment).
+			MatchParam("application", application).
+			MatchParam("zone", zone).
+			Reply(200).File("testdata/fasitAmResponse.json")
 
-	resource, err := fasit.GetOpenAmResource(ResourceRequest{alias, resourceType}, environment, application, zone)
+		resource, err := fasit.GetOpenAmResource(ResourceRequest{alias, resourceType}, environment, application, zone)
 
-	assert.Nil(t, err)
-	assert.Equal(t, hostname, resource.Hostname)
-	assert.Equal(t, username, resource.Username)
+		assert.Nil(t, err)
+		assert.Equal(t, hostname, resource.Hostname)
+		assert.Equal(t, username, resource.Username)
+	})
+
+	t.Run("Get openidconnect ressurs", func(t *testing.T) {
+		alias := "get-openidconnect-resource"
+		resourceType := ResourceTypeOIDC
+		gock.New("https://fasit.local").
+			Get("/api/v2/scopedresource").
+			MatchParam("alias", alias).
+			MatchParam("type", resourceType).
+			MatchParam("environment", environment).
+			MatchParam("application", application).
+			MatchParam("zone", zone).
+			Reply(200).File("testdata/fasitOpenIDConnectResponse.json")
+
+		existResource, err := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{alias, resourceType}, environment, application, zone)
+
+		assert.Nil(t, err)
+		assert.True(t, existResource)
+	})
 }
 
 func TestGetFasitApplication(t *testing.T) {
@@ -133,9 +153,9 @@ func TestPostFasitResources(t *testing.T) {
 	t.Run("Test if payload is created correctly", func(t *testing.T) {
 		asJSON, err := json.Marshal(payload)
 		assert.NoError(t, err)
-		assert.Equal(t, "{\"ID\":0,\"alias\":\"appName-oidc\",\"type\":\"OpenIdConnect\"," +
-			"\"scope\":{\"environmentclass\":\"t\",\"environment\":\"cd-u1\",\"zone\":\"fss\"," +
-			"\"application\":\"appName\"},\"properties\":{\"agentName\":\"appName-cd-u1\",\"hostUrl\":\"oidcURL\"," +
+		assert.Equal(t, "{\"ID\":0,\"alias\":\"appName-oidc\",\"type\":\"OpenIdConnect\","+
+			"\"scope\":{\"environmentclass\":\"t\",\"environment\":\"cd-u1\",\"zone\":\"fss\","+
+			"\"application\":\"appName\"},\"properties\":{\"agentName\":\"appName-cd-u1\",\"hostUrl\":\"oidcURL\","+
 			"\"issuerUrl\":\"issoIssuerURL\",\"jwksUrl\":\"issoJwksURL\"},\"secrets\":{\"password\":{\"value\":\"oicdAgentPassword\"}}}", string(asJSON))
 	})
 

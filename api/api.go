@@ -181,7 +181,7 @@ func (api *API) configure(w http.ResponseWriter, r *http.Request) *AppError {
 }
 
 func configureSBSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, zone string) *AppError {
-	openamResource, apErr := fasit.GetOpenAmResource(createResourceRequest("OpenAM", "OpenAM"),
+	openamResource, apErr := fasit.GetOpenAmResource(ResourceRequest{"OpenAM", "OpenAM"},
 		request.Environment, request.Application, zone)
 	if apErr != nil {
 		glog.Errorf("Could not get OpenAM resource: %s", apErr)
@@ -262,9 +262,20 @@ func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return appErr
 	}
 
-	appErr = fasit.PostFasitResource(payload, request)
+	resourceExist, appErr := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{payload.Alias, payload.ResourceType}, request.Application, request.Environment, zone)
 	if appErr != nil {
-		glog.Errorf("Failed to post OpenIDConnect resource to Fasit: %s", appErr)
+		glog.Errorf("Failed to check if OpenIDConnect resource exist: %s", appErr)
+		return appErr
+	}
+
+	if resourceExist {
+		appErr = fasit.UpdateFasitResource(payload, request)
+	} else {
+		appErr = fasit.PostFasitResource(payload, request)
+	}
+
+	if appErr != nil {
+		glog.Errorf("Failed to post/update OpenIDConnect resource to Fasit: %s", appErr)
 		return appErr
 	}
 
@@ -334,14 +345,6 @@ func unmarshalConfigurationRequest(body io.ReadCloser) (NamedConfigurationReques
 	}
 
 	return request, nil
-}
-
-func createResourceRequest(alias, resourceType string) ResourceRequest {
-	return ResourceRequest{
-		Alias:        alias,
-		ResourceType: resourceType,
-	}
-
 }
 
 // GetZone returns zone name for the cluster
