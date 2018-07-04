@@ -262,18 +262,19 @@ func configureFSSOpenam(fasit *FasitClient, request *NamedConfigurationRequest, 
 		return appErr
 	}
 
-	resourceExist := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{payload.Alias, payload.ResourceType}, request.Environment, request.Application, zone)
-
-	if resourceExist {
-		appErr = fasit.UpdateFasitResource(payload, request)
-		if appErr != nil {
-			glog.Errorf("Failed to PUT (update) OpenIDConnect resource to Fasit: %s", appErr)
-			return appErr
-		}
-	} else {
+	originalFasitResource, fasitErr := getFasitResource(*fasit, ResourceRequest{payload.Alias, payload.ResourceType}, request.Environment, request.Application, zone)
+	if fasitErr != nil {
+		glog.Infof("OpenIDConnect resource dosen't exist in Fasit: %s", fasitErr)
 		appErr = fasit.PostFasitResource(payload, request)
 		if appErr != nil {
 			glog.Errorf("Failed to POST OpenIDConnect resource to Fasit: %s", appErr)
+			return appErr
+		}
+	} else {
+		payload.ID = originalFasitResource.ID
+		appErr = fasit.UpdateFasitResource(payload, request)
+		if appErr != nil {
+			glog.Errorf("Failed to PUT (update) OpenIDConnect resource to Fasit: %s", appErr)
 			return appErr
 		}
 	}
