@@ -1,6 +1,6 @@
 {
   "type": "openidconnect",
-  "alias": "get-opendiconnect-resource",
+  "alias": "get-openidconnect-resource",
   "scope": {
     "environmentclass": "t",
     "zone": "zone",
