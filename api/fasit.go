@@ -216,7 +216,7 @@ func (fasit FasitClient) existOpenIDConnectResourceInFasit(request ResourceReque
 		return false
 	}
 
-	return fasitResource.Alias != request.Alias
+	return fasitResource.Alias == request.Alias
 }
 
 func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, *AppError) {
