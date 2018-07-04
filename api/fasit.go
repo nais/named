@@ -209,13 +209,14 @@ func (fasit FasitClient) GetOpenAmResource(resourcesRequest ResourceRequest, fas
 	return resource, nil
 }
 
-func (fasit FasitClient) existOpenIDConnectResourceInFasit(request ResourceRequest, fasitEnvironment string, application string, zone string) (bool, *AppError) {
+func (fasit FasitClient) existOpenIDConnectResourceInFasit(request ResourceRequest, fasitEnvironment string, application string, zone string) bool {
 	fasitResource, fasitErr := getFasitResource(fasit, request, fasitEnvironment, application, zone)
 	if fasitErr != nil {
-		return false, fasitErr
+		glog.Errorf("Got an error from Fasit when checking if openIDConnect exists: %s", fasitErr)
+		return false
 	}
 
-	return fasitResource.Alias != request.Alias, nil
+	return fasitResource.Alias != request.Alias
 }
 
 func getFasitResource(fasit FasitClient, resourcesRequest ResourceRequest, fasitEnvironment, application, zone string) (FasitResource, *AppError) {

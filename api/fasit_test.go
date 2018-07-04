@@ -50,10 +50,26 @@ func TestGettingResource(t *testing.T) {
 			MatchParam("zone", zone).
 			Reply(200).File("testdata/fasitOpenIDConnectResponse.json")
 
-		existResource, err := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{alias, resourceType}, environment, application, zone)
+		existResource := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{alias, resourceType}, environment, application, zone)
 
-		assert.Nil(t, err)
 		assert.True(t, existResource)
+	})
+
+	t.Run("Try to get openidconnect ressurs that isn't created", func(t *testing.T) {
+		alias := "get-openidconnect-resource"
+		resourceType := ResourceTypeOIDC
+		gock.New("https://fasit.local").
+			Get("/api/v2/scopedresource").
+			MatchParam("alias", alias).
+			MatchParam("type", resourceType).
+			MatchParam("environment", environment).
+			MatchParam("application", application).
+			MatchParam("zone", zone).
+			Reply(404).BodyString("No matching resources")
+
+		existResource := fasit.existOpenIDConnectResourceInFasit(ResourceRequest{alias, resourceType}, environment, application, zone)
+
+		assert.False(t, existResource)
 	})
 }
 
