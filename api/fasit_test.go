@@ -39,6 +39,19 @@ func TestGettingResource(t *testing.T) {
 	})
 }
 
+func TestInsertPortNumber(t *testing.T) {
+	urlWithPortNumber := "https://test.domain.com:443/path"
+	urlWithoutPortNumber := "https://test.domain.com/path"
+
+	parsedUrlWithPort, err := InsertPortNumber(urlWithPortNumber, 9443)
+	assert.Nil(t, err)
+	assert.Equal(t, urlWithPortNumber, parsedUrlWithPort)
+
+	parsedUrlWithoutPort, err := InsertPortNumber(urlWithoutPortNumber, 9443)
+	assert.Nil(t, err)
+	assert.Equal(t, "https://test.domain.com:9443/path", parsedUrlWithoutPort)
+}
+
 func TestGetFasitApplication(t *testing.T) {
 	fasit := FasitClient{"https://fasit.local", "", ""}
 

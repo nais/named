@@ -242,7 +242,7 @@ func (fasit FasitClient) mapToIssoResource(oidcURLResource FasitResource, oidcUs
 	oidcAgentResource FasitResource, loadbalancerResource FasitResource, ingressUrls []string) (resource IssoResource,
 	appErr *AppError) {
 	resource.oidcURL = oidcURLResource.Properties["url"]
-	issoURL, err := insertPortNumber(oidcURLResource.Properties["url"]+"/oauth2", 443)
+	issoURL, err := InsertPortNumber(oidcURLResource.Properties["url"]+"/oauth2", 443)
 	if err != nil {
 		return IssoResource{}, &AppError{err, "Could not parse url", http.StatusInternalServerError}
 	}
@@ -442,13 +442,28 @@ func (fasit FasitClient) buildRequestWithPayload(method, path string, payload []
 	return req, nil
 }
 
-func insertPortNumber(urlWithoutPort string, port int) (string, error) {
-	u, err := url.Parse(urlWithoutPort)
+func InsertPortNumber(originalUrl string, port int) (string, error) {
+	u, err := url.Parse(originalUrl)
 	if err != nil {
-		return urlWithoutPort, err
+		fmt.Println("Port: " + u.Port())
+		return originalUrl, err
 	}
+	if urlContainsPortNumber(originalUrl) {
+		return originalUrl, nil
+	}
+
 	return u.Scheme + "://" + u.Host + ":" + strconv.Itoa(port) + u.Path, nil
 }
+
+func urlContainsPortNumber(urlString string) bool {
+	u, err := url.Parse(urlString)
+	if err != nil || len(u.Port()) > 0 {
+		return true
+	}
+
+	return false
+}
+
 
 func (fasit FasitClient) getFasitEnvironment(environmentName string) (string, error) {
 	requestCounter.With(nil).Inc()
