@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.8
 MAINTAINER Sten Røkke <sten.ivar.rokke@nav.no>
 
 COPY webproxy.crt /usr/local/share/ca-certificates/
