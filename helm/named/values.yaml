@@ -4,6 +4,7 @@ repository: navikt/named
 minReplicas: 2
 maxReplicas: 4
 targetCPUUtilizationPercentage: 50
+runAsUser: 10001
 request:
   memory: 64Mi
   cpu: 250m

@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: named
@@ -11,10 +11,12 @@ spec:
   selector:
     matchLabels:
       app: named
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         app: named
+        release: {{ .Release.Name }}
       annotations:
         prometheus.io/scrape: "true"
         nais.io/logformat: glog
@@ -42,3 +44,10 @@ spec:
         - containerPort: 8081
           protocol: TCP
           name: http
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["all"]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: {{ .Values.runAsUser }}
