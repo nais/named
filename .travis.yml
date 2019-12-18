@@ -5,7 +5,7 @@ before_script:
 - docker pull navikt/dep:2.0.0
 - docker pull golang:1.10
 - docker pull navikt/helm
-- echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME -.password-stdin
+- echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
 - git clone https://github.com/nais/charts
 script:
 - make install test
