@@ -50,8 +50,8 @@ const (
 	ZoneFss = "fss"
 	// ZoneSbs is or outer zone
 	ZoneSbs           = "sbs"
-	clusterPreprodSbs = "preprod-sbs"
-	clusterPreprodFss = "preprod-fss"
+	clusterPreprodSbs = "dev-sbs"
+	clusterPreprodFss = "dev-fss"
 	clusterProdSbs    = "prod-sbs"
 	clusterProdFss    = "prod-fss"
 )

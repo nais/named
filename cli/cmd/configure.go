@@ -19,11 +19,11 @@ const defaultCluster = "preprod-fss"
 
 var clustersDict = map[string]string{
 	"nais-dev":     "nais.devillo.no",
-	"preprod-fss":  "nais.preprod.local",
+	"dev-fss":      "nais.preprod.local",
 	"prod-fss":     "nais.adeo.no",
 	"preprod-iapp": "nais-iapp.preprod.local",
 	"prod-iapp":    "nais-iapp.adeo.no",
-	"preprod-sbs":  "nais.oera-q.local",
+	"dev-sbs":      "nais.oera-q.local",
 	"prod-sbs":     "nais.oera.no",
 }
 
