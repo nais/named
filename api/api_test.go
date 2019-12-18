@@ -47,7 +47,7 @@ func TestCheckIfInvalidZone(t *testing.T) {
 	zone1 := GetZone("cluster")
 	assert.Empty(t, zone1)
 
-	zone2 := GetZone("preprod-fss")
+	zone2 := GetZone("dev-fss")
 	assert.Equal(t, "fss", zone2)
 }
 

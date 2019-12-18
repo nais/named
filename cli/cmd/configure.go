@@ -15,14 +15,12 @@ import (
 )
 
 const configureEndpoint = "/configure"
-const defaultCluster = "preprod-fss"
+const defaultCluster = "dev-fss"
 
 var clustersDict = map[string]string{
 	"nais-dev":     "nais.devillo.no",
 	"dev-fss":      "nais.preprod.local",
 	"prod-fss":     "nais.adeo.no",
-	"preprod-iapp": "nais-iapp.preprod.local",
-	"prod-iapp":    "nais-iapp.adeo.no",
 	"dev-sbs":      "nais.oera-q.local",
 	"prod-sbs":     "nais.oera.no",
 }

@@ -11,7 +11,7 @@ const port string = ":8081"
 
 func main() {
 	fasitURL := flag.String("fasitUrl", "https://fasit.example.no", "URL to fasit instance")
-	clusterName := flag.String("clusterName", "preprod-fss", "NAIS cluster name")
+	clusterName := flag.String("clusterName", "dev-fss", "NAIS cluster name")
 	flag.Parse()
 
 	api := api.NewAPI(*fasitURL, *clusterName)
