@@ -5,17 +5,20 @@ before_script:
 - docker pull navikt/dep:2.0.0
 - docker pull golang:1.10
 - docker pull navikt/helm
-- docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+- echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME -.password-stdin
 - git clone https://github.com/nais/charts
 script:
 - make install test
-- /bin/bash bump.sh $GH_TOKEN
+- "/bin/bash bump.sh $GH_TOKEN"
 - make linux cli-dist
-- git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push --tags https://$GH_TOKEN@github.com/nais/named
+- git tag -a $(/bin/cat ./version) -m "auto-tag from Makefile [skip ci]" && git push
+  --tags https://$GH_TOKEN@github.com/nais/named
 - make docker-build push-dockerhub
 - cd charts
-- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package /named/helm/named
-- docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts .
+- docker run -v $(pwd):/charts -v $(pwd)/../:/named -w /charts navikt/helm package
+  /named/helm/named
+- docker run -v $(pwd):/charts -w /charts navikt/helm repo index --url https://nais.github.io/charts
+  .
 - echo "<html><body><pre>$(cat index.yaml)</pre></body></html>" > index.html
 - git add --all
 - git commit -m "auto-update by travis [skip ci]"
@@ -41,3 +44,4 @@ env:
   - secure: HugIQaKXL26nMYLxcHJjBon9XIZOKhZA1WEEzWvwGgl0b6KnwFhBrK+/ytj+HmL7A5y2OVv2OyjmJMaBpqWFIfIvIOXRjWE7ZhHmStMi7/mhoVzsVnxMb5pZqQVOAxIByQeO09+Xsj6fc/fy6NWKoYCQj77FIyYxU4slcdsVFiwRZg4LqYz6e1iOv8kdhEXyd443IG0/UFMXuGQGyiZCYbGjNkQDwrnlGFR+BrQkj+xOLFwLOFPGHZJ2UXNVXaI/DBPSxk+/rYRC1466PpgTZ3MMGfN9dCA0t7z3wIEqRyHXl++r4YDOGrjlbl53AMZbCMdaI4/futyYlVoo4ys6FoeXUH7keRgzKxjrlEZfG3b59hAipdv9LHVkRkJ1HCvHSHXksAWWgCXcFsvRptsY5j5hQSJ9sOld/r0up5+xQRxqHayb0RsGaHOl8fZ0zMkVysGXW65QeRqcrcPUyo+NVLxDtlFsUlPJul59xQBxg0rPad26I4Ksjbr9qhCRUjckjD/PhKRDtJk66Wprkfxvt1gmZTyyiH5QkfU3hciQWJzLeSh62EX5hMwDb/aj0e3BBGLJdAxxUamUNys3cvi27EsuJ7HvsKgdWoFcEQS0inSULlR72nkhFjlZ5xCDuKuSNeG7o6ZLUjRQ7h/N1XMBT7CdGL9hx6F2SqS+wHGwgmU=
   - secure: isVy0wDidruZmAUJ/EhNmKpp+Pe/b6rTR9H4zQjXunvwGPReIvT3OBEFFki2KIAYdxExUS14eC7A4VsUQr4LhTYwzLA2HGE2dAH9xoZZNavOOLggRmPbypJSJEIsnzZijwbDHmizd+eAY0C/SGVBBpFoj5QHol4/eEn+xRYb1WPac8C0C8WCko9Cvxl99CMkFRESIo+hiJC7wGyEExLia8l+yfCxa71H9sOVe4tjUq46yIX6XwQga+8cZ+/9pHvOlMgq3apa64boww3sSGB5K4nKmd1yv02j75smqpD/vqfqldbnPrKQftdGULZHHI7eOSy55pR2cyjKVgG3EOSGZsuTBhKP5/TIaduBXlLdcfv5swASTIJXUI3lddK/csv8lKb/jEg3NPrNclcKcFBQVDvO1WxCbJUnoy1Ly115OAOdJWx+CGZRfeOE+S8ROH2PXh+AodRYaWJHA/Oj10tu8uNL4RJmWxLulEN6oMBDDXrj1JzhN8a+gHs+Rj84XuHIGxKT0cU53nGG9/TeUSykLqIiqSybNKfsYhbkaMdia3rGqrrKSxqfH1jiUDEveYT1O6OwdHKjqRI/J9f1xEn5uU0SZEdcg3YU06BwKINXZK3GjetxunR5C1QR+QDjfk+gYvxRKrCta9oyoJh7RNSCWeBTQYnhSr7TB42O8s/Q91U=
   - secure: 32+CbegPgkBav9q4d4quK10prFQrjTe6v3k1/Z5f0P4Zr4JLLMlqYzo0oAvrFV/GRVH0PmuO6p58WWq7wKh/Ndc8F8eS82X8ymyzQTneFziDyoK4PgYmYhGbanUcyYSsRDPk4Pl58hhVwkOXE9vIBcrWOmyQQj8C6Z2gfTu1OmFYfPwKF7mDanFsiXwKqdli6osLrypAIQ588Xy1q5Yyp0UMCDk7kIZLUQoKFNxGXkGYO6BMyJFnOp1BwPHzcqGP6Rins/1kyZ4f0TtiBvtwH8VdKZ6BlK5brtqoveN1S7t1kevNsrJCqZ0V3Qw1Wi/Ia65ShJLyZrC0m2todjn+gobiptcXZI7HQXMyWUBzmCFHTpGRZ5JQbgpMj/r7jEtvUpRwK/fwqku8ba5x9yjpS/+LY6BPZilgUp2xoPKorsr5Vwywx11CdrbhtKl8m4dLoV90OnSYCjzVppJvCHACtyHdR56Eg3W4kXSYohzcXfEfuYMZf+E710EsPZbUtilmPWaa/OkmqF+yZKSh745Oca6au4CQCCXCa+30CURYBuwjbo2Srb6OcQwoQIRo2t66oyF4+KpH5oT2dpLb9U/stCwTbs1eIXA41zJim8ORS38200qe5X2UpIDebx6fZV0zmSmozz6HnmwjAq9GOsNGR/O8dX8Ggy0FeqQwyAloF04=
+  - secure: ln1Jd1nK2mP2VORosEALjxyvSkICzyUFzOj3U3/4OLxhlgLUTiwWErfGvS/WE6+Xr/zs9IgGXfkbsaAyZUvpnAW/mP/dezXa4roqvyXZQsSYeYymvf1UsjNdt0mtRqLVsR5hsq0c0ityu5cKAzAWq04PNJqkdmhGSfSIst5taea466bXC080G10J9LDTE/kK2LTnYSRENsQqC651WcHJi7fDr+mtDTeYIwSbM13ftLNulo+An4f1Q6cUE0565Fw+SwNBh40JgjD/oCd+HSFNCs/q1tQkSNvC2oWWUVcl8ZjkD89pre91bVyrpk3EuQUmqXetqxJEgN6EwylDFl8abs3dm1xhtLbcpuczdLnaAEJjHwSbUBRAITaOCjxgzNevewlnoiLmEcA7mWzg5ALs0x/gMDCElWKEC5O0/MgIHLXjCKxeaZSmHcWlNtEYZWmaAiwmLGk+8KWm9bkhqTBigVgM3Tpxs5nOpzkvCbQQb8kydYdtQUvzRbvrHNzGl7Vy0fCJIYyV1GhGavLH5SAs0PdmMPjYOB5uG0cLP/JrBlrumgK8o2BA1Hx6hZDNoY/Yl6Mj95bWOcXbtf7kTOPWYt8mjzPFt2Hkx/v1jv40L3zKkqisNeG1Z4YjvG1As8o/Nns0pXVNUSgm+eLbOES1hr4xHjD30TAqNcvaEpx4Hao=
