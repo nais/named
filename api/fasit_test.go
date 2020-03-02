@@ -106,17 +106,41 @@ func TestGetIngressUrl(t *testing.T) {
 
 	request := NamedConfigurationRequest{Application: application, Environment: environmentName}
 	urls, err := fasit.GetIngressURL(&request, zone)
-	assert.Equal(t, []string{"testapp.nais.preprod.local", "testapp-" + environmentName + ".nais.preprod.local"}, urls)
+	assert.Equal(t, []string{
+		"testapp.nais.preprod.local",
+		"testapp-" + environmentName + ".nais.preprod.local",
+		"testapp.dev-fss.nais.io",
+		"testapp-" + environmentName + ".dev-fss.nais.io",
+	}, urls)
 	assert.Nil(t, err)
 }
 
 func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
-	assert.Equal(t, "preprod.local", GetDomainFromZoneAndEnvironmentClass("t", "fss"))
-	assert.Equal(t, "preprod.local", GetDomainFromZoneAndEnvironmentClass("q", "null"))
-	assert.Equal(t, "oera-q.local", GetDomainFromZoneAndEnvironmentClass("null", "sbs"))
-	assert.Equal(t, "oera-q.local", GetDomainFromZoneAndEnvironmentClass("t", "sbs"))
-	assert.Equal(t, "adeo.no", GetDomainFromZoneAndEnvironmentClass("p", "fss"))
-	assert.Equal(t, "oera.no", GetDomainFromZoneAndEnvironmentClass("p", "sbs"))
+	var domain, newDomain string
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("t", "fss")
+	assert.Equal(t, "nais.preprod.local", domain)
+	assert.Equal(t, "dev-fss.nais.io", newDomain)
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("q", "null")
+	assert.Equal(t, "nais.preprod.local", domain)
+	assert.Equal(t, "dev-fss.nais.io", newDomain)
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("null", "sbs")
+	assert.Equal(t, "nais.oera-q.local", domain)
+	assert.Equal(t, "dev-sbs.nais.io", newDomain)
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("t", "sbs")
+	assert.Equal(t, "nais.oera-q.local", domain)
+	assert.Equal(t, "dev-sbs.nais.io", newDomain)
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("p", "fss")
+	assert.Equal(t, "nais.adeo.no", domain)
+	assert.Equal(t, "prod-fss.nais.io", newDomain)
+
+	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("p", "sbs")
+	assert.Equal(t, "nais.oera.no", domain)
+	assert.Equal(t, "prod-sbs.nais.io", newDomain)
 }
 
 func TestPostFasitResources(t *testing.T) {

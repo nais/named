@@ -496,36 +496,46 @@ func (fasit FasitClient) GetIngressURL(request *NamedConfigurationRequest, zone 
 		return []string{}, err
 	}
 
-	domain := GetDomainFromZoneAndEnvironmentClass(environmentClass, zone)
-	ingressUrls := []string{fmt.Sprintf("%s.nais.%s", request.Application, domain), fmt.Sprintf("%s-%s.nais.%s", request.Application, request.Environment, domain)}
+	domain, newDomain := GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone)
+	ingressUrls := []string{
+		fmt.Sprintf("%s.%s", request.Application, domain),
+		fmt.Sprintf("%s-%s.%s", request.Application, request.Environment, domain),
+		fmt.Sprintf("%s.%s", request.Application, newDomain),
+		fmt.Sprintf("%s-%s.%s", request.Application, request.Environment, newDomain),
+	}
 
 	return ingressUrls, nil
 }
 
 // GetDomainFromZoneAndEnvironmentClass returns domain string
-func GetDomainFromZoneAndEnvironmentClass(environmentClass, zone string) string {
-	domain := "preprod.local"
+func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (string, string) {
+	domain := "nais.preprod.local"
+	newDomain := "dev-fss.nais.io"
 
 	if ZoneFss == zone {
 		// Using same domain for t and q as they create the same ingress
 		switch environmentClass {
 		case "p":
-			domain = "adeo.no"
+			domain = "nais.adeo.no"
+			newDomain = "prod-fss.nais.io"
 		default:
-			domain = "preprod.local"
+			domain = "nais.preprod.local"
+			newDomain = "dev-fss.nais.io"
 		}
 	}
 
 	if ZoneSbs == zone {
 		switch environmentClass {
 		case "p":
-			domain = "oera.no"
+			domain = "nais.oera.no"
+			newDomain = "prod-sbs.nais.io"
 		default:
-			domain = "oera-q.local"
+			domain = "nais.oera-q.local"
+			newDomain = "dev-sbs.nais.io"
 		}
 	}
 
-	return domain
+	return domain, newDomain
 }
 
 var httpReqsCounter = prometheus.NewCounterVec(
