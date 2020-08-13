@@ -77,3 +77,4 @@ Fetch dependencies:
 Build binary:
 ```go build -i .```
 
+
