@@ -496,7 +496,7 @@ func (fasit FasitClient) GetIngressURL(request *NamedConfigurationRequest, zone 
 		return []string{}, err
 	}
 
-	domain, newDomain := GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone)
+	domain, newDomain, naisDeviceDomain := GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone)
 	ingressUrls := []string{
 		fmt.Sprintf("%s.%s", request.Application, domain),
 		fmt.Sprintf("%s-%s.%s", request.Application, request.Environment, domain),
@@ -504,13 +504,20 @@ func (fasit FasitClient) GetIngressURL(request *NamedConfigurationRequest, zone 
 		fmt.Sprintf("%s-%s.%s", request.Application, request.Environment, newDomain),
 	}
 
+	ingressUrls = append(
+		ingressUrls,
+		fmt.Sprintf("%s.%s", request.Application, naisDeviceDomain),
+		fmt.Sprintf("%s-%s.%s", request.Application, request.Environment, naisDeviceDomain),
+	)
+
 	return ingressUrls, nil
 }
 
 // GetDomainFromZoneAndEnvironmentClass returns domain string
-func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (string, string) {
+func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (string, string, string) {
 	domain := "nais.preprod.local"
 	newDomain := "dev-fss.nais.io"
+	naisDeviceDomain := "dev.adeo.no"
 
 	if ZoneFss == zone {
 		// Using same domain for t and q as they create the same ingress
@@ -518,9 +525,11 @@ func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (strin
 		case "p":
 			domain = "nais.adeo.no"
 			newDomain = "prod-fss.nais.io"
+			naisDeviceDomain = "adeo.no"
 		default:
 			domain = "nais.preprod.local"
 			newDomain = "dev-fss.nais.io"
+			naisDeviceDomain = "dev.adeo.no"
 		}
 	}
 
@@ -529,13 +538,15 @@ func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (strin
 		case "p":
 			domain = "nais.oera.no"
 			newDomain = "prod-sbs.nais.io"
+			naisDeviceDomain = "nav.no"
 		default:
 			domain = "nais.oera-q.local"
 			newDomain = "dev-sbs.nais.io"
+			naisDeviceDomain = "dev.nav.no"
 		}
 	}
 
-	return domain, newDomain
+	return domain, newDomain, naisDeviceDomain
 }
 
 var httpReqsCounter = prometheus.NewCounterVec(

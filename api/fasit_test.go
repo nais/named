@@ -111,36 +111,44 @@ func TestGetIngressUrl(t *testing.T) {
 		"testapp-" + environmentName + ".nais.preprod.local",
 		"testapp.dev-fss.nais.io",
 		"testapp-" + environmentName + ".dev-fss.nais.io",
+		"testapp.dev.adeo.no",
+		"testapp-" + environmentName + ".dev.adeo.no",
 	}, urls)
 	assert.Nil(t, err)
 }
 
 func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
-	var domain, newDomain string
+	var domain, newDomain, naisDeviceDomain string
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("t", "fss")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("t", "fss")
 	assert.Equal(t, "nais.preprod.local", domain)
 	assert.Equal(t, "dev-fss.nais.io", newDomain)
+	assert.Equal(t, "dev.adeo.no", naisDeviceDomain)
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("q", "null")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("q", "null")
 	assert.Equal(t, "nais.preprod.local", domain)
 	assert.Equal(t, "dev-fss.nais.io", newDomain)
+	assert.Equal(t, "dev.adeo.no", naisDeviceDomain)
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("null", "sbs")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("null", "sbs")
 	assert.Equal(t, "nais.oera-q.local", domain)
 	assert.Equal(t, "dev-sbs.nais.io", newDomain)
+	assert.Equal(t, "dev.nav.no", naisDeviceDomain)
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("t", "sbs")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("t", "sbs")
 	assert.Equal(t, "nais.oera-q.local", domain)
 	assert.Equal(t, "dev-sbs.nais.io", newDomain)
+	assert.Equal(t, "dev.nav.no", naisDeviceDomain)
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("p", "fss")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("p", "fss")
 	assert.Equal(t, "nais.adeo.no", domain)
 	assert.Equal(t, "prod-fss.nais.io", newDomain)
+	assert.Equal(t, "adeo.no", naisDeviceDomain)
 
-	domain, newDomain = GetDomainsFromZoneAndEnvironmentClass("p", "sbs")
+	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("p", "sbs")
 	assert.Equal(t, "nais.oera.no", domain)
 	assert.Equal(t, "prod-sbs.nais.io", newDomain)
+	assert.Equal(t, "nav.no", naisDeviceDomain)
 }
 
 func TestPostFasitResources(t *testing.T) {
