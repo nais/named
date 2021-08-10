@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"encoding/json"
+
 	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 )
@@ -111,8 +112,8 @@ func TestGetIngressUrl(t *testing.T) {
 		"testapp-" + environmentName + ".nais.preprod.local",
 		"testapp.dev-fss.nais.io",
 		"testapp-" + environmentName + ".dev-fss.nais.io",
-		"testapp.dev.adeo.no",
-		"testapp-" + environmentName + ".dev.adeo.no",
+		"testapp.dev.intern.nav.no",
+		"testapp-" + environmentName + ".dev.intern.nav.no",
 	}, urls)
 	assert.Nil(t, err)
 }
@@ -123,12 +124,12 @@ func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
 	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("t", "fss")
 	assert.Equal(t, "nais.preprod.local", domain)
 	assert.Equal(t, "dev-fss.nais.io", newDomain)
-	assert.Equal(t, "dev.adeo.no", naisDeviceDomain)
+	assert.Equal(t, "dev.intern.nav.no", naisDeviceDomain)
 
 	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("q", "null")
 	assert.Equal(t, "nais.preprod.local", domain)
 	assert.Equal(t, "dev-fss.nais.io", newDomain)
-	assert.Equal(t, "dev.adeo.no", naisDeviceDomain)
+	assert.Equal(t, "dev.intern.nav.no", naisDeviceDomain)
 
 	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("null", "sbs")
 	assert.Equal(t, "nais.oera-q.local", domain)
@@ -143,7 +144,7 @@ func TestGetDomainFromZoneAndEnvironmentClass(t *testing.T) {
 	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("p", "fss")
 	assert.Equal(t, "nais.adeo.no", domain)
 	assert.Equal(t, "prod-fss.nais.io", newDomain)
-	assert.Equal(t, "adeo.no", naisDeviceDomain)
+	assert.Equal(t, "intern.nav.no", naisDeviceDomain)
 
 	domain, newDomain, naisDeviceDomain = GetDomainsFromZoneAndEnvironmentClass("p", "sbs")
 	assert.Equal(t, "nais.oera.no", domain)
