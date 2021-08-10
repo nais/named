@@ -1,5 +1,5 @@
 SHELL   := bash
-NAME    := navikt/named
+NAME    := ghcr.io/nais/named
 LATEST  := ${NAME}:latest
 DEP_IMG := navikt/dep:3.0.0
 DEP     := docker run --rm -v ${PWD}:/go/src/github.com/nais/named -w /go/src/github.com/nais/named ${DEP_IMG} dep
