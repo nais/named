@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"bytes"
+
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -515,22 +516,15 @@ func (fasit FasitClient) GetIngressURL(request *NamedConfigurationRequest, zone 
 
 // GetDomainFromZoneAndEnvironmentClass returns domain string
 func GetDomainsFromZoneAndEnvironmentClass(environmentClass, zone string) (string, string, string) {
+	// Valid for dev-fss
 	domain := "nais.preprod.local"
 	newDomain := "dev-fss.nais.io"
-	naisDeviceDomain := "dev.adeo.no"
+	naisDeviceDomain := "dev.intern.nav.no"
 
-	if ZoneFss == zone {
-		// Using same domain for t and q as they create the same ingress
-		switch environmentClass {
-		case "p":
-			domain = "nais.adeo.no"
-			newDomain = "prod-fss.nais.io"
-			naisDeviceDomain = "adeo.no"
-		default:
-			domain = "nais.preprod.local"
-			newDomain = "dev-fss.nais.io"
-			naisDeviceDomain = "dev.adeo.no"
-		}
+	if ZoneFss == zone && environmentClass == "p" {
+		domain = "nais.adeo.no"
+		newDomain = "prod-fss.nais.io"
+		naisDeviceDomain = "intern.nav.no"
 	}
 
 	if ZoneSbs == zone {
